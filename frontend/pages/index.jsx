@@ -1,12 +1,34 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence, useScroll, useTransform, useSpring, useInView } from 'framer-motion';
+
+// Import components
+ import StatsSection from '../components/StatsSection';
+ import Testimonials from '../components/Testimonials';
+import PropertyCard from '../components/PropertyCard';
+import ContactSidebar from '../components/ContactSidebar';
 
 const HomePage = () => {
+  // State management
   const [properties, setProperties] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeSlide, setActiveSlide] = useState(0);
+  
+  // Scroll animation setup
+  const { scrollY, scrollYProgress } = useScroll();
+  const headerBackgroundOpacity = useTransform(scrollY, [0, 100], [0.8, 0.95]);
+  const headerShadow = useTransform(scrollY, [0, 100], ["0 0 0 rgba(0,0,0,0)", "0 10px 20px rgba(0,0,0,0.1)"]);
+  const progressBarScaleX = useSpring(scrollYProgress, {
+    stiffness: 100,
+    damping: 30,
+    restDelta: 0.001
+  });
+  
+  // Refs
+  const heroRef = useRef(null);
+  const isHeroInView = useInView(heroRef);
 
+  // Fetch properties data
   useEffect(() => {
     fetch('http://localhost:5000/api/properties')
       .then(res => res.json())
@@ -20,442 +42,1142 @@ const HomePage = () => {
       });
   }, []);
 
+  // Hero slider animation
   useEffect(() => {
     const timer = setTimeout(() => {
       setActiveSlide((prevSlide) => 
         prevSlide === (properties.length - 1) ? 0 : prevSlide + 1
       );
-    }, 5000);
+    }, 6000);
     return () => clearTimeout(timer);
   }, [activeSlide, properties.length]);
 
-  const fadeIn = {
-    hidden: { opacity: 0 },
-    visible: { opacity: 1, transition: { duration: 1 } }
+  // Animation variants
+  const navVariants = {
+    hidden: { y: -100, opacity: 0 },
+    visible: { 
+      y: 0, 
+      opacity: 1,
+      transition: {
+        type: "spring",
+        stiffness: 100,
+        damping: 20,
+        staggerChildren: 0.1,
+        delayChildren: 0.3
+      }
+    }
   };
 
-  const slideIn = {
-    hidden: { x: 100, opacity: 0 },
-    visible: { x: 0, opacity: 1, transition: { type: "spring", stiffness: 100, damping: 15 } }
+  // AnimatedText component for staggered word reveal
+  const AnimatedText = ({ text, delay = 0, className = "" }) => {
+    const words = text.split(" ");
+    
+    const container = {
+      hidden: { opacity: 0 },
+      visible: (i = 1) => ({
+        opacity: 1,
+        transition: { staggerChildren: 0.12, delayChildren: delay * i },
+      }),
+    };
+    
+    const child = {
+      hidden: { opacity: 0, y: 20 },
+      visible: {
+        opacity: 1,
+        y: 0,
+        transition: {
+          type: "spring",
+          damping: 12,
+          stiffness: 100,
+        },
+      },
+    };
+    
+    return (
+      <motion.span
+        className={`inline-block ${className}`}
+        variants={container}
+        initial="hidden"
+        animate="visible"
+      >
+        {words.map((word, index) => (
+          <motion.span
+            key={index}
+            className="inline-block mr-1"
+            variants={child}
+          >
+            {word}{" "}
+          </motion.span>
+        ))}
+      </motion.span>
+    );
+  };
+  
+  // AnimatedButton component with hover effects
+  const AnimatedButton = ({ primary = true, children, className = "", ...props }) => {
+    const baseClasses = "relative overflow-hidden font-semibold rounded-md text-center inline-flex items-center justify-center transition-transform";
+    const buttonColor = primary 
+      ? "bg-red-600 hover:bg-red-700 text-white" 
+      : "border-2 border-white text-white hover:bg-white hover:text-black";
+    
+    return (
+      <motion.button
+        className={`${baseClasses} ${buttonColor} ${className}`}
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+        {...props}
+      >
+        <span className="relative z-10 px-6 py-3">{children}</span>
+        {!primary && (
+          <motion.span 
+            className="absolute inset-0 bg-white transform origin-left z-0"
+            initial={{ scaleX: 0 }}
+            whileHover={{ scaleX: 1 }}
+            transition={{ duration: 0.3 }}
+          />
+        )}
+        {primary && (
+          <motion.span 
+            className="absolute inset-0 bg-black transform origin-left z-0"
+            initial={{ scaleX: 0 }}
+            whileHover={{ scaleX: 1 }}
+            transition={{ duration: 0.3 }}
+          />
+        )}
+      </motion.button>
+    );
+  };
+  
+// 3D Rotating Card Component
+const RotatingCard = ({ frontContent, backContent }) => {
+  const [isFlipped, setIsFlipped] = useState(false);
+  
+  return (
+    <motion.div 
+      className="relative w-full h-full perspective-1000 cursor-pointer"
+      whileHover={{ scale: 1.03 }}
+      onClick={() => setIsFlipped(!isFlipped)}
+    >
+      <motion.div
+        className="relative w-full h-full transition-all duration-500 preserve-3d"
+        animate={{ rotateY: isFlipped ? 180 : 0 }}
+        transition={{ duration: 0.6, ease: "easeInOut" }}
+      >
+        {/* Front */}
+        <div className="absolute w-full h-full backface-hidden">
+          {frontContent}
+        </div>
+        
+        {/* Back */}
+        <div 
+          className="absolute w-full h-full backface-hidden"
+          style={{ transform: 'rotateY(180deg)' }}
+        >
+          {backContent}
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+};
+    // Interactive Property Slider
+  const PropertySlider = ({ properties }) => {
+    const [currentIndex, setCurrentIndex] = useState(0);
+    
+    const goToNext = () => {
+      setCurrentIndex((prev) => (prev === properties.length - 1 ? 0 : prev + 1));
+    };
+    
+    const goToPrev = () => {
+      setCurrentIndex((prev) => (prev === 0 ? properties.length - 1 : prev - 1));
+    };
+    
+    // Auto rotate
+    useEffect(() => {
+      const interval = setInterval(goToNext, 5000);
+      return () => clearInterval(interval);
+    }, []);
+    
+    const variants = {
+      enter: (direction) => ({
+        x: direction > 0 ? 1000 : -1000,
+        opacity: 0,
+      }),
+      center: {
+        x: 0,
+        opacity: 1,
+      },
+      exit: (direction) => ({
+        x: direction < 0 ? 1000 : -1000,
+        opacity: 0,
+      }),
+    };
+    
+    return (
+      <div className="relative w-full h-[600px] overflow-hidden rounded-xl">
+        <AnimatePresence initial={false} custom={currentIndex}>
+          <motion.div
+            key={currentIndex}
+            custom={currentIndex}
+            variants={variants}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            className="absolute inset-0"
+          >
+            <div 
+              className="w-full h-full bg-cover bg-center"
+              style={{ 
+                backgroundImage: `url(https://source.unsplash.com/random/1200x800?dubai,property,${properties[currentIndex]["Property Location"]})`
+              }}
+            >
+              <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-70" />
+              
+              <div className="absolute bottom-0 left-0 right-0 p-8 text-white">
+                <motion.div
+                  initial={{ y: 50, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.2 }}
+                >
+                  <span className="bg-red-600 text-white px-3 py-1 rounded-full text-sm">
+                    {properties[currentIndex]["Status"]}
+                  </span>
+                  <h3 className="text-3xl font-bold mt-3 mb-2">
+                    {properties[currentIndex]["Property Location"] || "Untitled Property"}
+                  </h3>
+                  <p className="text-lg opacity-90 mb-4">
+                    {properties[currentIndex]["District"]} - {properties[currentIndex]["City__1"]}
+                  </p>
+                  <div className="flex gap-4">
+                    <div>
+                      <p className="text-sm opacity-75">Price</p>
+                      <p className="text-xl font-bold">
+                        AED {properties[currentIndex]["TOTAL PRICE"].toLocaleString()}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm opacity-75">Area</p>
+                      <p className="text-xl font-bold">
+                        {properties[currentIndex]["Plot Area Sq. Ft."].toLocaleString()} sqft
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm opacity-75">Usage</p>
+                      <p className="text-xl font-bold">
+                        {properties[currentIndex]["Usage"]}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-6">
+                    <Link href={`/properties/${properties[currentIndex]["OFFER NO"]}`}>
+                      <motion.button
+                        className="bg-red-600 text-white px-6 py-3 rounded-lg font-semibold flex items-center"
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                      >
+                        <span>View Property</span>
+                        <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                        </svg>
+                      </motion.button>
+                    </Link>
+                  </div>
+                </motion.div>
+              </div>
+            </div>
+          </motion.div>
+        </AnimatePresence>
+        
+        {/* Navigation buttons */}
+        <button 
+          className="absolute top-1/2 left-4 transform -translate-y-1/2 bg-white bg-opacity-20 hover:bg-opacity-40 w-12 h-12 rounded-full flex items-center justify-center text-white backdrop-blur-sm z-10"
+          onClick={goToPrev}
+        >
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+        
+        <button 
+          className="absolute top-1/2 right-4 transform -translate-y-1/2 bg-white bg-opacity-20 hover:bg-opacity-40 w-12 h-12 rounded-full flex items-center justify-center text-white backdrop-blur-sm z-10"
+          onClick={goToNext}
+        >
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+        
+        {/* Indicators */}
+        <div className="absolute bottom-20 left-0 right-0 flex justify-center gap-2 z-10">
+          {properties.slice(0, 5).map((_, i) => (
+            <button
+              key={i}
+              className={`w-12 h-1 rounded-full transition-all ${i === currentIndex ? 'bg-red-600 w-20' : 'bg-white bg-opacity-50'}`}
+              onClick={() => setCurrentIndex(i)}
+            />
+          ))}
+        </div>
+      </div>
+    );
   };
 
-  const scaleUp = {
-    hidden: { scale: 0.8, opacity: 0 },
-    visible: { scale: 1, opacity: 1, transition: { duration: 0.5 } }
+  const navItemVariants = {
+    hidden: { y: -20, opacity: 0 },
+    visible: { 
+      y: 0, 
+      opacity: 1,
+      transition: { type: "spring", stiffness: 300, damping: 20 }
+    }
   };
 
   return (
     <div className="bg-white min-h-screen">
+      {/* Progress bar */}
+      <motion.div 
+        className="fixed top-0 left-0 right-0 h-1 bg-red-600 z-50 origin-left"
+        style={{ scaleX: progressBarScaleX }}
+      />
+      
       {/* Header */}
       <motion.header 
-        className="bg-black text-white p-4 fixed w-full z-10"
-        initial={{ y: -100 }}
-        animate={{ y: 0 }}
-        transition={{ type: "spring", stiffness: 100 }}
+        className="bg-black text-white py-4 px-6 fixed w-full z-40 transition-all duration-300"
+        style={{
+          boxShadow: headerShadow,
+          backgroundColor: `rgba(0,0,0,${headerBackgroundOpacity})`
+        }}
+        variants={navVariants}
+        initial="hidden"
+        animate="visible"
       >
         <div className="container mx-auto flex justify-between items-center">
+          {/* Logo */}
           <div className="flex items-center">
             <motion.div
-              initial={{ rotate: -10, scale: 0 }}
+              initial={{ rotate: -180, scale: 0 }}
               animate={{ rotate: 0, scale: 1 }}
-              transition={{ duration: 0.5 }}
-              className="w-10 h-10 mr-2 bg-red-600 rounded-full flex items-center justify-center"
+              transition={{ 
+                type: "spring",
+                stiffness: 260,
+                damping: 20,
+                duration: 0.8 
+              }}
+              className="w-12 h-12 mr-3 bg-red-600 rounded-full flex items-center justify-center"
             >
-              <span className="text-white font-bold">PL</span>
-            </motion.div>
-            <motion.h1 
-              className="text-2xl font-bold"
-              initial={{ x: -20, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              transition={{ delay: 0.2 }}
-            >
-              Planet Land
-            </motion.h1>
-          </div>
-          <nav>
-            <ul className="flex space-x-6">
-              <motion.li 
-                whileHover={{ scale: 1.1 }}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.3 }}
-              >
-                <Link href="/" className="hover:text-red-500 transition-colors">Home</Link>
-              </motion.li>
-              <motion.li 
-                whileHover={{ scale: 1.1 }}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.4 }}
-              >
-                <Link href="/properties" className="hover:text-red-500 transition-colors">Properties</Link>
-              </motion.li>
-              <motion.li 
-                whileHover={{ scale: 1.1 }}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.5 }}
-              >
-                <Link href="/about" className="hover:text-red-500 transition-colors">About</Link>
-              </motion.li>
-              <motion.li 
-                whileHover={{ scale: 1.1 }}
+              <motion.span
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.6 }}
+                className="text-white font-bold text-lg"
               >
-                <Link href="/contact" className="hover:text-red-500 transition-colors">Contact</Link>
-              </motion.li>
-            </ul>
+                PL
+              </motion.span>
+            </motion.div>
+            <motion.div
+              initial={{ x: -30, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ delay: 0.4, duration: 0.5 }}
+            >
+              <h1 className="text-2xl font-bold">
+                <span className="text-white">Planet</span>
+                <span className="text-red-600">Land</span>
+              </h1>
+              <motion.div
+                initial={{ scaleX: 0, originX: 0 }}
+                animate={{ scaleX: 1 }}
+                transition={{ delay: 0.8, duration: 0.5 }}
+                className="h-0.5 bg-red-600 w-full mt-1"
+              />
+            </motion.div>
+          </div>
+          
+          {/* Navigation */}
+          <nav className="hidden md:block">
+            <motion.ul 
+              className="flex space-x-8"
+              variants={navVariants}
+              initial="hidden"
+              animate="visible"
+            >
+              {['Home', 'Properties', 'About', 'Contact'].map((item, i) => (
+                <motion.li 
+                  key={item}
+                  variants={navItemVariants}
+                  custom={i}
+                  whileHover={{ scale: 1.1 }}
+                >
+                  <Link href={item === 'Home' ? '/' : `/${item.toLowerCase()}`} 
+                    className="relative group text-white transition-colors">
+                    <span>{item}</span>
+                    <motion.span 
+                      className="absolute bottom-0 left-0 w-full h-0.5 bg-red-600 origin-left transform"
+                      initial={{ scaleX: 0 }}
+                      whileHover={{ scaleX: 1 }}
+                      transition={{ duration: 0.3 }}
+                    />
+                  </Link>
+                </motion.li>
+              ))}
+            </motion.ul>
           </nav>
+          
+          {/* Login button */}
           <motion.div
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ delay: 0.7, type: "spring" }}
           >
             <Link href="/login">
-              <button className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md font-semibold transition-colors">
-                Login
-              </button>
+              <motion.button
+                className="relative overflow-hidden group bg-red-600 text-white px-5 py-2 rounded-md font-semibold transition-all duration-300"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <span className="relative z-10">Login</span>
+                <motion.span 
+                  className="absolute inset-0 bg-black transform origin-right"
+                  initial={{ scaleX: 0 }}
+                  whileHover={{ scaleX: 1 }}
+                  transition={{ duration: 0.3 }}
+                />
+              </motion.button>
             </Link>
+          </motion.div>
+          
+          {/* Mobile menu button */}
+          <motion.div
+            className="block md:hidden"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.7 }}
+          >
+            <button className="text-white focus:outline-none">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
           </motion.div>
         </div>
       </motion.header>
-
-      {/* Hero Section */}
-      <motion.section 
-        className="relative h-screen bg-black flex items-center justify-center overflow-hidden"
-        initial="hidden"
-        animate="visible"
-        variants={fadeIn}
+{/* ContactSidebar */}
+    <ContactSidebar />
+      {/* Main Content Sections will go here */}
+      {/* 1. Hero Section */}
+      <section 
+  ref={heroRef}
+  className="relative h-screen flex items-center justify-center overflow-hidden bg-black"
+>
+  {/* Animated background slider */}
+  <div className="absolute inset-0 z-0">
+  <AnimatePresence mode="wait">
+    {properties.length > 0 && (
+      <motion.div
+        key={activeSlide}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 0.6 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 1.5 }}
+        className="absolute inset-0"
       >
-        {properties.length > 0 && (
-          <div className="absolute inset-0 z-0">
-            {properties.map((property, index) => (
-              <div 
-                key={property["OFFER NO"]} 
-                className={`absolute inset-0 transition-opacity duration-1000 ${index === activeSlide ? 'opacity-40' : 'opacity-0'}`}
-                style={{
-                  backgroundImage: `url(https://source.unsplash.com/random/1920x1080?dubai,property,${property["Property Location"]})`,
-                  backgroundSize: 'cover',
-                  backgroundPosition: 'center'
-                }}
-              />
-            ))}
-          </div>
-        )}
-        
-        <div className="container mx-auto px-4 z-10 mt-16">
-          <div className="max-w-3xl">
-            <motion.h2 
-              className="text-5xl md:text-6xl font-bold text-white mb-4"
-              variants={slideIn}
-            >
-              Premier Properties in <span className="text-red-600">Dubai</span>
-            </motion.h2>
-            <motion.p 
-              className="text-xl text-white mb-8"
-              variants={slideIn}
-              transition={{ delay: 0.2 }}
-            >
-              Discover exclusive high-value real estate opportunities with Planet Land
-            </motion.p>
-            <motion.div
-              className="flex space-x-4"
-              variants={slideIn}
-              transition={{ delay: 0.4 }}
-            >
-              <button className="bg-red-600 hover:bg-red-700 text-white px-8 py-3 rounded-md font-semibold text-lg transition-colors">
-                Explore Properties
-              </button>
-              <button className="border-2 border-white text-white hover:bg-white hover:text-black px-8 py-3 rounded-md font-semibold text-lg transition-colors">
-                Contact Us
-              </button>
-            </motion.div>
-          </div>
-        </div>
-
-        <motion.div 
-          className="absolute bottom-10 left-0 right-0 flex justify-center space-x-2"
+        {/* Video element for background */}
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="w-full h-full object-cover"
+          src={
+            properties[activeSlide]?.videoUrl ||
+            'https://raw.githubusercontent.com/AbdallaMalik/PlanetLand/master/PlanetLandHero.mp4' // Provided video URL
+          }
+        />
+        {/* Gradient overlay */}
+        <motion.div
+          className="absolute inset-0 bg-gradient-to-r from-black via-transparent to-black opacity-50"
           initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1 }}
+          animate={{ opacity: 0.7 }}
+          transition={{ delay: 0.5 }}
+        />
+      </motion.div>
+    )}
+  </AnimatePresence>
+
+  {/* Overlapping animated patterns */}
+  <div className="absolute inset-0 z-0 opacity-10">
+    <motion.div
+      className="absolute top-0 left-0 w-full h-full"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 2 }}
+    >
+      <div className="w-full h-full bg-[radial-gradient(circle_at_center,rgba(220,38,38,0.3),transparent_70%)]" />
+    </motion.div>
+  </div>
+</div>
+
+  <div className="container mx-auto px-4 z-10 mt-20">
+    <motion.div 
+      className="max-w-3xl"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 1 }}
+    >
+      <div className="overflow-hidden mb-4">
+        <AnimatedText 
+          text="Discover Excellence in" 
+          className="text-4xl md:text-6xl font-bold text-white"
+        />
+      </div>
+      <div className="overflow-hidden mb-6">
+        <AnimatedText 
+          text="Dubai Real Estate" 
+          className="text-4xl md:text-6xl font-bold text-red-600"
+          delay={0.2}
+        />
+      </div>
+      
+      <motion.p 
+        className="text-xl text-white mb-8 max-w-2xl"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.8, duration: 0.8 }}
+      >
+        Exclusive high-value properties and development opportunities
+        in Dubai's most prestigious locations.
+      </motion.p>
+      
+      <motion.div
+        className="flex flex-col sm:flex-row gap-4"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 1.2, duration: 0.8 }}
+      >
+        <AnimatedButton primary className="px-8 py-4 text-lg">
+          <span className="flex items-center">
+            <span>Explore Properties</span>
+            <motion.svg
+              animate={{ x: [0, 5, 0] }}
+              transition={{ repeat: Infinity, duration: 1.5 }}
+              className="w-5 h-5 ml-2"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+            </motion.svg>
+          </span>
+        </AnimatedButton>
+        
+        <AnimatedButton primary={false} className="px-8 py-4 text-lg">
+          Contact Us
+        </AnimatedButton>
+      </motion.div>
+    </motion.div>
+  </div>
+
+  {/* Animated scroll indicator */}
+  <motion.div 
+    className="absolute bottom-10 left-0 right-0 flex justify-center"
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    transition={{ delay: 2 }}
+  >
+    <motion.div
+      className="w-8 h-12 border-2 border-white rounded-full flex justify-center"
+      animate={{ y: [0, 10, 0] }}
+      transition={{ repeat: Infinity, duration: 1.5 }}
+    >
+      <motion.div
+        className="w-1.5 h-1.5 bg-white rounded-full mt-2"
+        animate={{ y: [0, 5, 0] }}
+        transition={{ repeat: Infinity, duration: 1.5 }}
+      />
+    </motion.div>
+  </motion.div>
+  
+  {/* Slide indicators */}
+  <motion.div 
+    className="absolute bottom-10 left-0 right-0 flex justify-center space-x-2"
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    transition={{ delay: 1.5 }}
+  >
+    {properties.slice(0, 5).map((_, index) => (
+      <motion.button 
+        key={index}
+        onClick={() => setActiveSlide(index)}
+        className={`relative w-10 h-2 rounded-full overflow-hidden ${activeSlide === index ? 'bg-red-600' : 'bg-white bg-opacity-30'} transition-colors`}
+        whileHover={{ scale: 1.1 }}
+      >
+        {activeSlide === index && (
+          <motion.div 
+            className="absolute inset-0 bg-red-600"
+            initial={{ scaleX: 0, originX: 0 }}
+            animate={{ scaleX: 1 }}
+            transition={{ duration: 6, ease: "linear" }}
+          />
+        )}
+      </motion.button>
+    ))}
+  </motion.div>
+</section>
+      {/* 2. Featured Properties Section */}
+{properties.length > 0 && (
+  <section className="py-20 bg-gray-50">
+    <div className="container mx-auto px-4">
+      <motion.div 
+        className="text-center mb-16 relative"
+        initial={{ opacity: 0, y: 50 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.6 }}
+      >
+        <motion.div
+          className="inline-block relative"
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.3 }}
         >
-          {properties.slice(0, 5).map((_, index) => (
-            <button 
-              key={index}
-              onClick={() => setActiveSlide(index)}
-              className={`w-3 h-3 rounded-full ${activeSlide === index ? 'bg-red-600' : 'bg-white bg-opacity-50'} transition-colors`}
-            />
-          ))}
+          <h2 className="text-4xl md:text-5xl font-bold mb-2 relative z-10">
+            <span className="text-black">Featured </span>
+            <span className="text-red-600">Properties</span>
+          </h2>
+          <motion.div 
+            className="absolute -bottom-3 left-0 right-0 h-3 bg-gray-100 z-0"
+            initial={{ scaleX: 0 }}
+            whileInView={{ scaleX: 1 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.6, duration: 0.6 }}
+          />
         </motion.div>
-      </motion.section>
+        
+        <motion.div 
+          className="w-24 h-1 bg-red-600 mx-auto my-6"
+          initial={{ width: 0 }}
+          whileInView={{ width: 96 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.9, duration: 0.6 }}
+        />
+        
+        <motion.p 
+          className="text-gray-600 mt-4 max-w-2xl mx-auto"
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ delay: 1.2 }}
+        >
+          Browse our selection of premium properties with our interactive slider
+        </motion.p>
+      </motion.div>
 
-      {/* Featured Properties */}
-      <section className="py-20 bg-white">
-        <div className="container mx-auto px-4">
-          <motion.div 
-            className="text-center mb-12"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
+      {/* Interactive Property Slider */}
+      {properties.length > 0 && (
+        <PropertySlider properties={properties.slice(0, 5)} />
+      )}
+      
+      <motion.div 
+        className="text-center mt-16"
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.6, delay: 0.5 }}
+      >
+        <Link href="/properties">
+          <motion.button 
+            className="relative overflow-hidden group bg-white border-2 border-red-600 text-red-600 px-8 py-3 rounded-md font-semibold transition-all duration-300"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
           >
-            <h2 className="text-4xl font-bold mb-2">Featured <span className="text-red-600">Properties</span></h2>
-            <div className="w-20 h-1 bg-red-600 mx-auto"></div>
-            <p className="text-gray-600 mt-4 max-w-2xl mx-auto">
-              Explore our handpicked selection of exclusive properties in the most prestigious areas of Dubai
-            </p>
-          </motion.div>
-
-          {isLoading ? (
-            <div className="flex justify-center items-center h-40">
-              <div className="w-12 h-12 border-4 border-red-600 border-t-transparent rounded-full animate-spin"></div>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {properties.slice(0, 3).map((property, index) => (
-                <motion.div 
-                  key={property["OFFER NO"]}
-                  className="bg-white rounded-lg overflow-hidden shadow-lg hover:shadow-2xl transition-shadow"
-                  initial={{ opacity: 0, y: 50 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.5, delay: index * 0.1 }}
-                  whileHover={{ y: -10 }}
-                >
-                  <div className="relative h-60 overflow-hidden">
-                    <img 
-                      src={`https://source.unsplash.com/random/600x400?dubai,building,${property["Property Location"]}`} 
-                      alt={property["Property Location"]} 
-                      className="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
-                    />
-                    <div className="absolute top-4 right-4 bg-red-600 text-white py-1 px-3 rounded-md font-semibold">
-                      {property["Status"]}
-                    </div>
-                  </div>
-                  <div className="p-6">
-                    <h3 className="text-xl font-bold mb-2">{property["Property Location"] || "Untitled Plot"}</h3>
-                    <p className="text-gray-600 mb-2">{property["District"]} - {property["City__1"]}</p>
-                    <div className="flex flex-wrap gap-2 mb-4">
-                      <span className="bg-gray-100 text-gray-800 px-2 py-1 rounded-md text-sm">
-                       {property["Plot Area Sq. Ft."] 
-  ? property["Plot Area Sq. Ft."].toLocaleString() + " sqft" 
-  : "N/A"}
-                      </span>
-                      <span className="bg-gray-100 text-gray-800 px-2 py-1 rounded-md text-sm">
-                        {property["Usage"]}
-                      </span>
-                      <span className="bg-gray-100 text-gray-800 px-2 py-1 rounded-md text-sm">
-                        {property["Proposed Height Letters"]}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <p className="font-bold text-lg text-red-600">
-                        AED {property["TOTAL PRICE"].toLocaleString()}
-                      </p>
-                      <Link href={`/properties/${property["OFFER NO"]}`}>
-                        <button className="bg-black hover:bg-gray-800 text-white px-4 py-2 rounded-md transition-colors">
-                          View Details
-                        </button>
-                      </Link>
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          )}
-
-          <motion.div 
-            className="text-center mt-12"
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: 0.5 }}
-          >
-            <Link href="/properties">
-              <button className="border-2 border-red-600 text-red-600 hover:bg-red-600 hover:text-white px-8 py-3 rounded-md font-semibold transition-colors">
-                View All Properties
-              </button>
-            </Link>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Why Choose Us */}
-      <section className="py-20 bg-gray-50">
-        <div className="container mx-auto px-4">
-          <motion.div 
-            className="text-center mb-12"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-          >
-            <h2 className="text-4xl font-bold mb-2">Why Choose <span className="text-red-600">Planet Land</span></h2>
-            <div className="w-20 h-1 bg-red-600 mx-auto"></div>
-          </motion.div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {[
-              {
-                icon: "🏢",
-                title: "Premium Locations",
-                description: "Access to exclusive properties in Dubai's most prestigious neighborhoods"
-              },
-              {
-                icon: "💰",
-                title: "Investment Expertise",
-                description: "Professional guidance on high-value real estate investments with maximum ROI"
-              },
-              {
-                icon: "🤝",
-                title: "Personalized Service",
-                description: "Tailored approach to meet your specific real estate needs and preferences"
-              }
-            ].map((item, index) => (
-              <motion.div 
-                key={index}
-                className="bg-white p-8 rounded-lg shadow-md text-center"
-                initial={{ opacity: 0, scale: 0.8 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.4, delay: index * 0.1 }}
-                whileHover={{ y: -10 }}
+            <span className="relative z-10 flex allerg-items-center">
+              <span>View All Properties</span>
+              <motion.svg
+                className="w-5 h-5 ml-2"
+                animate={{ x: [0, 5, 0] }}
+                transition={{ repeat: Infinity, duration: 1.5 }}
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
               >
-                <div className="text-4xl mb-4">{item.icon}</div>
-                <h3 className="text-xl font-bold mb-2">{item.title}</h3>
-                <p className="text-gray-600">{item.description}</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+              </motion.svg>
+            </span>
+            <motion.span 
+              className="absolute inset-0 bg-red-600 transform origin-left z-0"
+              initial={{ scaleX: 0 }}
+              whileHover={{ scaleX: 1 }}
+              transition={{ duration: 0.3 }}
+            />
+          </motion.button>
+        </Link>
+      </motion.div>
+    </div>
+  </section>
+)}
 
-      {/* CTA Section */}
-      <motion.section 
-        className="py-20 bg-black text-white relative overflow-hidden"
+<section className="py-20 bg-white">
+  <div className="container mx-auto px-4">
+    <motion.div 
+      className="text-center mb-16 relative"
+      initial={{ opacity: 0, y: 50 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.6 }}
+    >
+      <motion.div
+        className="inline-block relative"
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true }}
+        transition={{ delay: 0.3 }}
+      >
+        <h2 className="text-4xl md:text-5xl font-bold mb-2 relative z-10">
+          <span className="text-black">Premium </span>
+          <span className="text-red-600">Opportunities</span>
+        </h2>
+        <motion.div 
+          className="absolute -bottom-3 left-0 right-0 h-3 bg-gray-100 z-0"
+          initial={{ scaleX: 0 }}
+          whileInView={{ scaleX: 1 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.6, duration: 0.6 }}
+        />
+      </motion.div>
+      
+      <motion.div 
+        className="w-24 h-1 bg-red-600 mx-auto my-6"
+        initial={{ width: 0 }}
+        whileInView={{ width: 96 }}
+        viewport={{ once: true }}
+        transition={{ delay: 0.9, duration: 0.6 }}
+      />
+      
+      <motion.p 
+        className="text-gray-600 mt-4 max-w-2xl mx-auto"
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true }}
+        transition={{ delay: 1.2 }}
+      >
+        Explore our handpicked selection of exclusive properties in the most prestigious areas of Dubai
+      </motion.p>
+    </motion.div>
+
+    {isLoading ? (
+      <div className="flex justify-center items-center h-60">
+        <motion.div 
+          className="w-16 h-16 border-4 border-gray-200 border-t-red-600 rounded-full"
+          animate={{ rotate: 360 }}
+          transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
+        />
+      </div>
+    ) : (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {properties.slice(0, 3).map((property, index) => (
+          <PropertyCard key={property["OFFER NO"]} property={property} index={index} />
+        ))}
+      </div>
+    )}
+
+    <motion.div 
+      className="text-center mt-16"
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.6, delay: 0.5 }}
+    >
+      <Link href="/properties">
+        <motion.button 
+          className="relative overflow-hidden group bg-black text-white px-8 py-3 rounded-md font-semibold transition-all duration-300"
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          <span className="relative z-10 flex items-center">
+            <span>Explore All Properties</span>
+            <motion.svg
+              className="w-5 h-5 ml-2"
+              animate={{ x: [0, 5, 0] }}
+              transition={{ repeat: Infinity, duration: 1.5 }}
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+            </motion.svg>
+          </span>
+          <motion.span 
+            className="absolute inset-0 bg-red-600 transform origin-left z-0"
+            initial={{ scaleX: 0 }}
+            whileHover={{ scaleX: 1 }}
+            transition={{ duration: 0.3 }}
+          />
+        </motion.button>
+      </Link>
+    </motion.div>
+  </div>
+</section>
+      {/* 3. Stats Section */}
+      <StatsSection />
+      {/* 4. Why Choose Us Section */}
+      <section className="py-20 bg-white overflow-hidden relative">
+  <motion.div 
+    className="absolute top-0 right-0 w-72 h-72 bg-red-100 rounded-full opacity-20 -z-10"
+    animate={{ 
+      x: [0, 30, 0],
+      y: [0, -50, 0],
+    }}
+    transition={{ 
+      repeat: Infinity, 
+      duration: 15,
+      ease: "easeInOut"
+    }}
+  />
+  <motion.div 
+    className="absolute bottom-20 left-10 w-64 h-64 bg-gray-200 rounded-full opacity-30 -z-10"
+    animate={{ 
+      x: [0, -20, 0],
+      y: [0, 30, 0],
+    }}
+    transition={{ 
+      repeat: Infinity, 
+      duration: 20,
+      ease: "easeInOut"
+    }}
+  />
+
+  <div className="container mx-auto px-4">
+    <motion.div 
+      className="text-center mb-16 relative"
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.6 }}
+    >
+      <motion.div
+        className="inline-block relative"
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true }}
+        transition={{ delay: 0.3 }}
+      >
+        <h2 className="text-4xl md:text-5xl font-bold mb-2 relative z-10">
+          <span className="text-black">Why Choose </span>
+          <span className="text-red-600">Planet Land</span>
+        </h2>
+        <motion.div 
+          className="absolute -bottom-3 left-0 right-0 h-3 bg-gray-100 z-0"
+          initial={{ scaleX: 0 }}
+          whileInView={{ scaleX: 1 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.6, duration: 0.6 }}
+        />
+      </motion.div>
+      
+      <motion.div 
+        className="w-24 h-1 bg-red-600 mx-auto my-6"
+        initial={{ width: 0 }}
+        whileInView={{ width: 96 }}
+        viewport={{ once: true }}
+        transition={{ delay: 0.9, duration: 0.6 }}
+      />
+    </motion.div>
+
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
+      {[
+        {
+          title: "Premium Locations",
+          description: "Access to exclusive properties in Dubai's most prestigious neighborhoods",
+          icon: "🌍",
+          stats: "175+ Prime Properties",
+          bgColor: "from-red-500 to-red-700"
+        },
+        {
+          title: "Investment Expertise",
+          description: "Professional guidance on high-value real estate investments with maximum ROI",
+          icon: "📈",
+          stats: "AED 2.5B+ Portfolio Value",
+          bgColor: "from-black to-gray-800"
+        },
+        {
+          title: "Personalized Service",
+          description: "Tailored approach to meet your specific real estate needs and preferences",
+          icon: "🤝",
+          stats: "98% Client Satisfaction",
+          bgColor: "from-red-600 to-red-800"
+        }
+      ].map((feature, index) => (
+        <div key={index} className="h-80 perspective-1000">
+          <RotatingCard 
+            frontContent={
+              <motion.div 
+                className="h-full bg-white p-8 rounded-xl shadow-xl flex flex-col items-center justify-center text-center"
+                whileHover={{ boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)" }}
+              >
+                <motion.div 
+                  className="w-20 h-20 rounded-full bg-red-600 flex items-center justify-center text-4xl mb-6"
+                  whileHover={{ 
+                    scale: 1.1,
+                    rotate: 5
+                  }}
+                >
+                  {feature.icon}
+                </motion.div>
+                <h3 className="text-2xl font-bold mb-4">{feature.title}</h3>
+                <p className="text-gray-600">{feature.description}</p>
+                <div className="mt-4 text-red-600 font-medium">Click to see more</div>
+              </motion.div>
+            }
+            backContent={
+              <motion.div 
+                className={`h-full bg-gradient-to-br ${feature.bgColor} p-8 rounded-xl shadow-xl flex flex-col items-center justify-center text-center text-white`}
+              >
+                <h3 className="text-2xl font-bold mb-6">{feature.title}</h3>
+                <div className="text-4xl font-bold mb-4">{feature.stats}</div>
+                <p className="mb-6">Our team of experts is ready to help you find the perfect property investment.</p>
+                <motion.button
+                  className="bg-white text-black px-6 py-3 rounded-lg font-semibold"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  Learn More
+                </motion.button>
+              </motion.div>
+            }
+          />
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
+      {/* 5. Testimonials Section */}
+      <Testimonials />
+      {/* MAP */}
+<section className="py-20 bg-gray-50 overflow-hidden">
+  <div className="container mx-auto px-4">
+    <motion.div
+      className="text-center mb-16"
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.6 }}
+    >
+      <h2 className="text-4xl md:text-5xl font-bold mb-2">
+        <span className="text-black">Prime </span>
+        <span className="text-red-600">Locations</span>
+      </h2>
+      <motion.div 
+        className="w-24 h-1 bg-red-600 mx-auto my-6"
+        initial={{ width: 0 }}
+        whileInView={{ width: 96 }}
+        viewport={{ once: true }}
+        transition={{ delay: 0.3, duration: 0.6 }}
+      />
+      <p className="text-gray-600 mt-4 max-w-2xl mx-auto">
+        Explore Dubai's most prestigious areas where we offer exclusive property opportunities
+      </p>
+    </motion.div>
+
+    {/* Interactive 3D Map */}
+    <div className="relative h-[500px] bg-black rounded-xl overflow-hidden shadow-2xl perspective-1000">
+      <motion.div
+        className="absolute inset-0 w-full h-full"
+        style={{
+          backgroundImage: "url(https://source.unsplash.com/random/1200x800?dubai,skyline,aerial)",
+          backgroundSize: "cover",
+          backgroundPosition: "center"
+        }}
+        initial={{ scale: 1.1, opacity: 0.5 }}
+        whileInView={{ scale: 1, opacity: 0.7 }}
+        viewport={{ once: true }}
+        transition={{ duration: 1 }}
+      >
+        <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-70" />
+      </motion.div>
+
+      <div className="relative w-full h-full z-10">
+        {/* Location pins */}
+        {[
+          { id: 1, name: "Business Bay", x: "30%", y: "45%" },
+          { id: 2, name: "Downtown Dubai", x: "35%", y: "35%" },
+          { id: 3, name: "Dubai Marina", x: "15%", y: "65%" },
+          { id: 4, name: "Palm Jumeirah", x: "20%", y: "55%" },
+          { id: 5, name: "DIFC", x: "40%", y: "40%" }
+        ].map((location) => (
+          <motion.div
+            key={location.id}
+            className="absolute"
+            style={{ 
+              left: location.x,
+              top: location.y,
+            }}
+            initial={{ scale: 0, opacity: 0 }}
+            whileInView={{ scale: 1, opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: location.id * 0.15 }}
+            whileHover={{ scale: 1.2, zIndex: 20 }}
+          >
+            <motion.div 
+              className="relative"
+              animate={{ y: [0, -10, 0] }}
+              transition={{ repeat: Infinity, duration: 2, delay: location.id * 0.2 }}
+            >
+              {/* Pin */}
+              <div className="relative">
+                <motion.div
+                  className="w-4 h-4 rounded-full bg-red-600 mb-1"
+                  animate={{ 
+                    boxShadow: [
+                      "0 0 0 0 rgba(220, 38, 38, 0.7)",
+                      "0 0 0 10px rgba(220, 38, 38, 0)",
+                    ]
+                  }}
+                  transition={{ 
+                    repeat: Infinity, 
+                    duration: 1.5, 
+                    delay: location.id * 0.2 
+                  }}
+                />
+                
+                {/* Pointer */}
+                <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-full w-2 h-2 bg-red-600 rotate-45" />
+              </div>
+              
+              {/* Label */}
+              <motion.div 
+                className="bg-white text-black text-xs py-1 px-2 rounded-lg shadow-lg whitespace-nowrap mt-2"
+                initial={{ opacity: 0, y: 5 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: location.id * 0.15 + 0.5 }}
+              >
+                {location.name}
+              </motion.div>
+            </motion.div>
+          </motion.div>
+        ))}
+      </div>
+      
+      {/* Interactive elements */}
+      <div className="absolute bottom-6 right-6 z-20">
+        <motion.div 
+          className="bg-white bg-opacity-90 rounded-lg p-3 shadow-lg text-sm"
+          initial={{ opacity: 0, x: 20 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.8 }}
+        >
+          <p className="font-semibold mb-2">Our Premium Locations</p>
+          <ul className="space-y-1">
+            {["Business Bay", "Downtown Dubai", "Dubai Marina", "Palm Jumeirah", "DIFC"].map((location, i) => (
+              <motion.li 
+                key={location}
+                className="flex items-center"
+                initial={{ opacity: 0, x: 20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.8 + i * 0.1 }}
+              >
+                <span className="w-2 h-2 bg-red-600 rounded-full mr-2" />
+                {location}
+              </motion.li>
+            ))}
+          </ul>
+        </motion.div>
+      </div>
+    </div>
+  </div>
+</section>
+{/* 6. Call-to-Action Section */}
+<section className="py-20 bg-black text-white relative overflow-hidden">
+  <div 
+    className="absolute inset-0 z-0 opacity-20" 
+    style={{
+      backgroundImage: 'url(https://source.unsplash.com/random/1920x1080?dubai,skyline,night)',
+      backgroundSize: 'cover',
+      backgroundPosition: 'center'
+    }}
+  />
+  
+  {/* Animated red lines */}
+  <motion.div
+    className="absolute top-0 left-0 w-full h-1 bg-red-600"
+    initial={{ scaleX: 0, transformOrigin: "left" }}
+    whileInView={{ scaleX: 1 }}
+    viewport={{ once: true }}
+    transition={{ duration: 1.5 }}
+  />
+  <motion.div
+    className="absolute bottom-0 right-0 w-full h-1 bg-red-600"
+    initial={{ scaleX: 0, transformOrigin: "right" }}
+    whileInView={{ scaleX: 1 }}
+    viewport={{ once: true }}
+    transition={{ duration: 1.5 }}
+  />
+  
+  <div className="container mx-auto px-4 relative z-10">
+    <div className="max-w-3xl mx-auto">
+      <motion.div 
+        className="text-center perspective-1000"
         initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}
         viewport={{ once: true }}
         transition={{ duration: 0.8 }}
       >
-        <div 
-          className="absolute inset-0 z-0 opacity-20" 
-          style={{
-            backgroundImage: 'url(https://source.unsplash.com/random/1920x1080?dubai,skyline)',
-            backgroundSize: 'cover',
-            backgroundPosition: 'center'
-          }}
-        ></div>
-        <div className="container mx-auto px-4 relative z-10">
-          <div className="max-w-3xl mx-auto text-center">
-            <motion.h2 
-              className="text-4xl font-bold mb-4"
-              variants={scaleUp}
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true }}
-            >
-              Ready to Find Your Perfect Property?
-            </motion.h2>
-            <motion.p 
-              className="text-xl mb-8"
-              variants={scaleUp}
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true }}
-              transition={{ delay: 0.2 }}
-            >
-              Let us help you discover the most exclusive real estate opportunities in Dubai
-            </motion.p>
-            <motion.div
-              variants={scaleUp}
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true }}
-              transition={{ delay: 0.4 }}
-            >
-              <button className="bg-red-600 hover:bg-red-700 text-white px-8 py-3 rounded-md font-semibold text-lg transition-colors mx-2">
-                Contact an Agent
-              </button>
-              <button className="border-2 border-white text-white hover:bg-white hover:text-black px-8 py-3 rounded-md font-semibold text-lg transition-colors mx-2 mt-4 md:mt-0">
-                Browse Properties
-              </button>
-            </motion.div>
-          </div>
-        </div>
-      </motion.section>
-
+        <motion.div
+          initial={{ rotateX: -30, opacity: 0 }}
+          whileInView={{ rotateX: 0, opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8 }}
+        >
+          <h2 className="text-4xl md:text-5xl font-bold mb-6">
+            Ready to Find Your <span className="text-red-600">Perfect Property</span>?
+          </h2>
+        </motion.div>
+        
+        <motion.p 
+          className="text-xl mb-10"
+          initial={{ y: 30, opacity: 0 }}
+          whileInView={{ y: 0, opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.3, duration: 0.8 }}
+        >
+          Let us help you discover the most exclusive real estate opportunities in Dubai
+        </motion.p>
+        
+        <motion.div
+          className="flex flex-col sm:flex-row gap-5 justify-center"
+          initial={{ y: 30, opacity: 0 }}
+          whileInView={{ y: 0, opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.6, duration: 0.8 }}
+        >
+          <AnimatedButton primary className="px-8 py-4 text-lg">
+            <span className="flex items-center">
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              Find Your Property
+            </span>
+          </AnimatedButton>
+          
+          <AnimatedButton primary={false} className="px-8 py-4 text-lg">
+            <span className="flex items-center">
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+              Contact Us
+            </span>
+          </AnimatedButton>
+        </motion.div>
+      </motion.div>
+    </div>
+  </div>
+</section>
       {/* Footer */}
       <footer className="bg-black text-white pt-16 pb-8">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
-            <div>
-              <h3 className="text-xl font-bold mb-4">Planet Land</h3>
-              <p className="text-gray-400 mb-4">
-                Your gateway to premium real estate opportunities in Dubai's most prestigious locations.
-              </p>
-              <div className="flex space-x-4">
-                <a href="#" className="text-white hover:text-red-500 transition-colors">
-                  <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path fillRule="evenodd" d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z" clipRule="evenodd" />
-                  </svg>
-                </a>
-                <a href="#" className="text-white hover:text-red-500 transition-colors">
-                  <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path fillRule="evenodd" d="M12.315 2c2.43 0 2.784.013 3.808.06 1.064.049 1.791.218 2.427.465a4.902 4.902 0 011.772 1.153 4.902 4.902 0 011.153 1.772c.247.636.416 1.363.465 2.427.048 1.067.06 1.407.06 4.123v.08c0 2.643-.012 2.987-.06 4.043-.049 1.064-.218 1.791-.465 2.427a4.902 4.902 0 01-1.153 1.772 4.902 4.902 0 01-1.772 1.153c-.636.247-1.363.416-2.427.465-1.067.048-1.407.06-4.123.06h-.08c-2.643 0-2.987-.012-4.043-.06-1.064-.049-1.791-.218-2.427-.465a4.902 4.902 0 01-1.772-1.153 4.902 4.902 0 01-1.153-1.772c-.247-.636-.416-1.363-.465-2.427-.047-1.024-.06-1.379-.06-3.808v-.63c0-2.43.013-2.784.06-3.808.049-1.064.218-1.791.465-2.427a4.902 4.902 0 011.153-1.772A4.902 4.902 0 015.45 2.525c.636-.247 1.363-.416 2.427-.465C8.901 2.013 9.256 2 11.685 2h.63zm-.081 1.802h-.468c-2.456 0-2.784.011-3.807.058-.975.045-1.504.207-1.857.344-.467.182-.8.398-1.15.748-.35.35-.566.683-.748 1.15-.137.353-.3.882-.344 1.857-.047 1.023-.058 1.351-.058 3.807v.468c0 2.456.011 2.784.058 3.807.045.975.207 1.504.344 1.857.182.466.399.8.748 1.15.35.35.683.566 1.15.748.353.137.882.3 1.857.344 1.054.048 1.37.058 4.041.058h.08c2.597 0 2.917-.01 3.96-.058.976-.045 1.505-.207 1.858-.344.466-.182.8-.398 1.15-.748.35-.35.566-.683.748-1.15.137-.353.3-.882.344-1.857.048-1.055.058-1.37.058-4.041v-.08c0-2.597-.01-2.917-.058-3.96-.045-.976-.207-1.505-.344-1.858a3.097 3.097 0 00-.748-1.15 3.098 3.098 0 00-1.15-.748c-.353-.137-.882-.3-1.857-.344-1.023-.047-1.351-.058-3.807-.058zM12 6.865a5.135 5.135 0 110 10.27 5.135 5.135 0 010-10.27zm0 1.802a3.333 3.333 0 100 6.666 3.333 3.333 0 000-6.666zm5.338-3.205a1.2 1.2 0 110 2.4 1.2 1.2 0 010-2.4z" clipRule="evenodd" />
-                  </svg>
-                </a>
-                <a href="#" className="text-white hover:text-red-500 transition-colors">
-                  <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path d="M8.29 20.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0022 5.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.072 4.072 0 012.8 9.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 012 18.407a11.616 11.616 0 006.29 1.84" />
-                  </svg>
-                </a>
-              </div>
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold mb-4">Quick Links</h3>
-              <ul className="space-y-2">
-                <li><a href="#" className="text-gray-400 hover:text-red-500 transition-colors">Home</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-red-500 transition-colors">Properties</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-red-500 transition-colors">About Us</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-red-500 transition-colors">Contact</a></li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold mb-4">Property Types</h3>
-              <ul className="space-y-2">
-                <li><a href="#" className="text-gray-400 hover:text-red-500 transition-colors">Development Plots</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-red-500 transition-colors">Commercial Properties</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-red-500 transition-colors">Residential Towers</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-red-500 transition-colors">Mixed-Use Developments</a></li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold mb-4">Contact Us</h3>
-              <ul className="space-y-2 text-gray-400">
-                <li className="flex items-start">
-                  <svg className="w-5 h-5 mt-0.5 mr-2 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                  </svg>
-                  <span>Business Bay, Dubai, UAE</span>
-                </li>
-                <li className="flex items-start">
-                  <svg className="w-5 h-5 mt-0.5 mr-2 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
-                  </svg>
-                  <span>+971 50 123 4567</span>
-                </li>
-                <li className="flex items-start">
-                  <svg className="w-5 h-5 mt-0.5 mr-2 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-                  </svg>
-                  <span>info@planetland.com</span>
-                </li>
-              </ul>
-            </div>
+            {/* Footer content will go here */}
           </div>
           <div className="border-t border-gray-800 pt-8">
             <p className="text-center text-gray-400">© 2025 Planet Land Real Estate. All rights reserved.</p>
