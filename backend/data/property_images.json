@@ -1,0 +1,94 @@
+{
+  "property_images": [
+    {
+      "id": "img-1001",
+      "propertyId": "OFFER-123",
+      "url": "https://property-images.example.com/properties/OFFER-123/exterior-front.jpg",
+      "description": "Front view of the property",
+      "timestamp": "2025-04-15T10:30:00Z",
+      "order": 1,
+      "type": "exterior",
+      "metadata": {
+        "width": 1920,
+        "height": 1080,
+        "size": 1245678,
+        "format": "jpg"
+      }
+    },
+    {
+      "id": "img-1002",
+      "propertyId": "OFFER-123",
+      "url": "https://property-images.example.com/properties/OFFER-123/interior-living.jpg",
+      "description": "Living room with panoramic view",
+      "timestamp": "2025-04-15T10:32:00Z",
+      "order": 2,
+      "type": "interior",
+      "metadata": {
+        "width": 1920,
+        "height": 1080,
+        "size": 1543210,
+        "format": "jpg"
+      }
+    },
+    {
+      "id": "img-1003",
+      "propertyId": "OFFER-123",
+      "url": "https://property-images.example.com/properties/OFFER-123/floor-plan.jpg",
+      "description": "Floor plan",
+      "timestamp": "2025-04-15T10:35:00Z",
+      "order": 3,
+      "type": "floor_plan",
+      "metadata": {
+        "width": 2400,
+        "height": 1600,
+        "size": 876543,
+        "format": "jpg"
+      }
+    },
+    {
+      "id": "img-2001",
+      "propertyId": "OFFER-456",
+      "url": "https://property-images.example.com/properties/OFFER-456/exterior-aerial.jpg",
+      "description": "Aerial view of the property",
+      "timestamp": "2025-04-16T09:15:00Z",
+      "order": 1,
+      "type": "exterior",
+      "metadata": {
+        "width": 2000,
+        "height": 1500,
+        "size": 2145678,
+        "format": "jpg"
+      }
+    },
+    {
+      "id": "img-2002",
+      "propertyId": "OFFER-456",
+      "url": "https://property-images.example.com/properties/OFFER-456/interior-kitchen.jpg",
+      "description": "Modern kitchen with island",
+      "timestamp": "2025-04-16T09:18:00Z",
+      "order": 2,
+      "type": "interior",
+      "metadata": {
+        "width": 1920,
+        "height": 1080,
+        "size": 1876543,
+        "format": "jpg"
+      }
+    },
+    {
+      "id": "img-3001",
+      "propertyId": "OFFER-789",
+      "url": "https://property-images.example.com/properties/OFFER-789/exterior-night.jpg",
+      "description": "Night view of the property",
+      "timestamp": "2025-04-17T18:30:00Z",
+      "order": 1,
+      "type": "exterior",
+      "metadata": {
+        "width": 1920,
+        "height": 1080,
+        "size": 1987654,
+        "format": "jpg"
+      }
+    }
+  ]
+}
