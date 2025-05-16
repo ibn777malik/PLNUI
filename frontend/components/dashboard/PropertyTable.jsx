@@ -3,8 +3,9 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { FaSort, FaSortUp, FaSortDown, FaEye, FaEdit, FaTrash } from 'react-icons/fa';
+import PropertyEditor from './PropertyEditor';
 
-const PropertyTable = ({ properties, visibleColumns }) => {
+const PropertyTable = ({ properties, visibleColumns, onUpdate }) => {
   const [sortConfig, setSortConfig] = useState({
     key: 'OFFER NO',
     direction: 'ascending'
@@ -12,6 +13,8 @@ const PropertyTable = ({ properties, visibleColumns }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [selectedRows, setSelectedRows] = useState([]);
+  // Add state to track the property being edited
+  const [editingProperty, setEditingProperty] = useState(null);
   
   // Formatting functions
   const formatValue = (value, column) => {
@@ -90,6 +93,31 @@ const PropertyTable = ({ properties, visibleColumns }) => {
       setSelectedRows([]);
     } else {
       setSelectedRows(paginatedProperties.map(row => row["OFFER NO"]));
+    }
+  };
+  
+  // Handle edit property
+  const handleEditProperty = (property) => {
+    setEditingProperty(property);
+  };
+  
+  // Handle property update
+  const handlePropertyUpdate = (updatedProperty, images) => {
+    if (onUpdate) {
+      onUpdate('update', updatedProperty, images);
+    }
+    setEditingProperty(null);
+  };
+  
+  // Handle close property editor
+  const handleCloseEditor = () => {
+    setEditingProperty(null);
+  };
+  
+  // Handle delete property
+  const handleDeleteProperty = (propertyId) => {
+    if (onUpdate) {
+      onUpdate('delete', propertyId);
     }
   };
   
@@ -213,10 +241,16 @@ const PropertyTable = ({ properties, visibleColumns }) => {
                     <Link href={`/properties/${property["OFFER NO"]}`} className="text-blue-600 hover:text-blue-900 p-1 rounded hover:bg-blue-100">
                       <FaEye size={16} title="View" />
                     </Link>
-                    <button className="text-green-600 hover:text-green-900 p-1 rounded hover:bg-green-100">
+                    <button 
+                      className="text-green-600 hover:text-green-900 p-1 rounded hover:bg-green-100"
+                      onClick={() => handleEditProperty(property)}
+                    >
                       <FaEdit size={16} title="Edit" />
                     </button>
-                    <button className="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-100">
+                    <button 
+                      className="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-100"
+                      onClick={() => handleDeleteProperty(property["OFFER NO"])}
+                    >
                       <FaTrash size={16} title="Delete" />
                     </button>
                   </div>
@@ -299,6 +333,16 @@ const PropertyTable = ({ properties, visibleColumns }) => {
           </button>
         </div>
       </div>
+      
+      {/* Property Editor Modal */}
+      {editingProperty && (
+        <PropertyEditor
+          property={editingProperty}
+          onClose={handleCloseEditor}
+          onSave={handlePropertyUpdate}
+          onDelete={handleDeleteProperty}
+        />
+      )}
     </div>
   );
 };
