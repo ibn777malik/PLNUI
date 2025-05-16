@@ -1,4 +1,3 @@
-// backend/controllers/imageController.js
 const path = require('path');
 const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
@@ -61,61 +60,65 @@ const ensurePropertyDir = (propertyId) => {
 exports.getAllImages = (req, res) => {
   try {
     const data = readImagesData();
-    res.json(data.property_images);
+    res.status(200).json({ success: true, images: data.property_images });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Failed to get images', error: error.message });
+    console.error('Error in getAllImages:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch images', error: error.message });
   }
 };
 
-// Get images for a specific property
+// Get images for a property
 exports.getPropertyImages = (req, res) => {
   try {
     const { propertyId } = req.params;
     const data = readImagesData();
-    const propertyImages = data.property_images.filter(img => img.propertyId === propertyId);
-    res.json(propertyImages);
+    const images = data.property_images.filter(img => img.propertyId === propertyId);
+    res.status(200).json({ success: true, images });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Failed to get property images', error: error.message });
+    console.error('Error in getPropertyImages:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch images', error: error.message });
   }
 };
 
-// Add a new image to a property
+// Add a new image to a property (file upload)
 exports.addPropertyImage = (req, res) => {
   try {
     const { propertyId } = req.params;
     
-    // Check if image file was uploaded
     if (!req.file) {
       return res.status(400).json({ success: false, message: 'No image file uploaded' });
     }
     
-    // Ensure property directory exists
     const { originalDir, thumbnailsDir } = ensurePropertyDir(propertyId);
-    
-    // Get the uploaded file details
     const file = req.file;
-    const fileExtension = path.extname(file.originalname);
+    const fileExtension = path.extname(file.originalname).toLowerCase();
     const imageId = `img-${uuidv4()}`;
     const filename = `${imageId}${fileExtension}`;
     
-    // Move the file to the property's directory
     const filePath = path.join(originalDir, filename);
+    console.log(`Moving uploaded file from ${file.path} to ${filePath}`);
     fs.renameSync(file.path, filePath);
     
-    // Create a thumbnail (in a real app, you would use a library like sharp)
-    // For this example, we'll just copy the file
+    if (!fs.existsSync(filePath)) {
+      console.error(`File not found after move: ${filePath}`);
+      return res.status(500).json({ success: false, message: 'Failed to save image file' });
+    }
+    
     const thumbnailPath = path.join(thumbnailsDir, `thumb-${filename}`);
+    console.log(`Creating thumbnail at ${thumbnailPath}`);
     fs.copyFileSync(filePath, thumbnailPath);
     
-    // Read the current images data
-    const data = readImagesData();
+    if (!fs.existsSync(thumbnailPath)) {
+      console.error(`Thumbnail not found after creation: ${thumbnailPath}`);
+      return res.status(500).json({ success: false, message: 'Failed to create thumbnail' });
+    }
     
-    // Create the new image object
+    const data = readImagesData();
     const newImage = {
       id: imageId,
       propertyId,
-      url: `/uploads/properties/${propertyId}/original/${filename}`,
-      thumbnailUrl: `/uploads/properties/${propertyId}/thumbnails/thumb-${filename}`,
+      url: `/Uploads/properties/${propertyId}/original/${filename}`,
+      thumbnailUrl: `/Uploads/properties/${propertyId}/thumbnails/thumb-${filename}`,
       description: req.body.description || '',
       timestamp: new Date().toISOString(),
       order: data.property_images.filter(img => img.propertyId === propertyId).length + 1,
@@ -128,89 +131,91 @@ exports.addPropertyImage = (req, res) => {
       }
     };
     
-    // Add the new image to the data
     data.property_images.push(newImage);
     
-    // Write the updated data
+    console.log(`Writing image data to ${imagesDataPath}`);
     if (writeImagesData(data)) {
+      console.log(`Successfully added image: ${newImage.url}`);
       res.status(201).json({ success: true, image: newImage });
     } else {
+      console.error('Failed to write image data');
       res.status(500).json({ success: false, message: 'Failed to save image data' });
     }
   } catch (error) {
+    console.error('Error in addPropertyImage:', error);
     res.status(500).json({ success: false, message: 'Failed to add image', error: error.message });
   }
 };
 
-// Add image via URL
+// Add a new image by URL
 exports.addPropertyImageUrl = (req, res) => {
   try {
     const { propertyId } = req.params;
-    const { url, description, type } = req.body;
+    const { url, description } = req.body;
     
     if (!url) {
       return res.status(400).json({ success: false, message: 'Image URL is required' });
     }
     
-    // Read the current images data
     const data = readImagesData();
+    const imageId = `img-${uuidv4()}`;
     
-    // Create the new image object
     const newImage = {
-      id: `img-${uuidv4()}`,
+      id: imageId,
       propertyId,
       url,
+      thumbnailUrl: url,
       description: description || '',
       timestamp: new Date().toISOString(),
       order: data.property_images.filter(img => img.propertyId === propertyId).length + 1,
-      type: type || 'exterior'
+      type: req.body.type || 'exterior',
+      metadata: {
+        source: 'url'
+      }
     };
     
-    // Add the new image to the data
     data.property_images.push(newImage);
     
-    // Write the updated data
     if (writeImagesData(data)) {
+      console.log(`Successfully added image by URL: ${newImage.url}`);
       res.status(201).json({ success: true, image: newImage });
     } else {
+      console.error('Failed to write image data');
       res.status(500).json({ success: false, message: 'Failed to save image data' });
     }
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Failed to add image URL', error: error.message });
+    console.error('Error in addPropertyImageUrl:', error);
+    res.status(500).json({ success: false, message: 'Failed to add image by URL', error: error.message });
   }
 };
 
-// Update an image
+// Update an image's details
 exports.updatePropertyImage = (req, res) => {
   try {
     const { propertyId, imageId } = req.params;
-    const { description, order, type } = req.body;
-    
-    // Read the current images data
+    const { description } = req.body;
     const data = readImagesData();
     
-    // Find the image to update
-    const imageIndex = data.property_images.findIndex(img => img.id === imageId && img.propertyId === propertyId);
+    const imageIndex = data.property_images.findIndex(
+      img => img.propertyId === propertyId && img.id === imageId
+    );
     
     if (imageIndex === -1) {
       return res.status(404).json({ success: false, message: 'Image not found' });
     }
     
-    // Update the image properties
-    if (description !== undefined) data.property_images[imageIndex].description = description;
-    if (order !== undefined) data.property_images[imageIndex].order = order;
-    if (type !== undefined) data.property_images[imageIndex].type = type;
+    data.property_images[imageIndex] = {
+      ...data.property_images[imageIndex],
+      description: description || data.property_images[imageIndex].description
+    };
     
-    // Update the timestamp
-    data.property_images[imageIndex].timestamp = new Date().toISOString();
-    
-    // Write the updated data
     if (writeImagesData(data)) {
-      res.json({ success: true, image: data.property_images[imageIndex] });
+      res.status(200).json({ success: true, image: data.property_images[imageIndex] });
     } else {
       res.status(500).json({ success: false, message: 'Failed to update image data' });
     }
   } catch (error) {
+    console.error('Error in updatePropertyImage:', error);
     res.status(500).json({ success: false, message: 'Failed to update image', error: error.message });
   }
 };
@@ -219,45 +224,38 @@ exports.updatePropertyImage = (req, res) => {
 exports.deletePropertyImage = (req, res) => {
   try {
     const { propertyId, imageId } = req.params;
-    
-    // Read the current images data
     const data = readImagesData();
     
-    // Find the image to delete
-    const imageIndex = data.property_images.findIndex(img => img.id === imageId && img.propertyId === propertyId);
+    const imageIndex = data.property_images.findIndex(
+      img => img.propertyId === propertyId && img.id === imageId
+    );
     
     if (imageIndex === -1) {
       return res.status(404).json({ success: false, message: 'Image not found' });
     }
     
-    const imageToDelete = data.property_images[imageIndex];
-    
-    // If the image is stored on the server, delete the file
-    if (imageToDelete.url && imageToDelete.url.startsWith('/uploads/')) {
-      const filePath = path.join(__dirname, '..', imageToDelete.url);
+    const image = data.property_images[imageIndex];
+    if (image.metadata.filename) {
+      const filePath = path.join(__dirname, '../Uploads/properties', propertyId, 'original', image.metadata.filename);
+      const thumbnailPath = path.join(__dirname, '../Uploads/properties', propertyId, 'thumbnails', `thumb-${image.metadata.filename}`);
+      
       if (fs.existsSync(filePath)) {
         fs.unlinkSync(filePath);
       }
-      
-      // Also delete the thumbnail if it exists
-      if (imageToDelete.thumbnailUrl) {
-        const thumbnailPath = path.join(__dirname, '..', imageToDelete.thumbnailUrl);
-        if (fs.existsSync(thumbnailPath)) {
-          fs.unlinkSync(thumbnailPath);
-        }
+      if (fs.existsSync(thumbnailPath)) {
+        fs.unlinkSync(thumbnailPath);
       }
     }
     
-    // Remove the image from the data
     data.property_images.splice(imageIndex, 1);
     
-    // Write the updated data
     if (writeImagesData(data)) {
-      res.json({ success: true, message: 'Image deleted successfully' });
+      res.status(200).json({ success: true, message: 'Image deleted' });
     } else {
-      res.status(500).json({ success: false, message: 'Failed to update image data after deletion' });
+      res.status(500).json({ success: false, message: 'Failed to delete image data' });
     }
   } catch (error) {
+    console.error('Error in deletePropertyImage:', error);
     res.status(500).json({ success: false, message: 'Failed to delete image', error: error.message });
   }
 };
@@ -266,49 +264,35 @@ exports.deletePropertyImage = (req, res) => {
 exports.bulkUploadImages = (req, res) => {
   try {
     const { propertyId } = req.params;
+    const files = req.files;
     
-    // Check if files were uploaded
-    if (!req.files || req.files.length === 0) {
+    if (!files || files.length === 0) {
       return res.status(400).json({ success: false, message: 'No image files uploaded' });
     }
     
-    // Ensure property directory exists
     const { originalDir, thumbnailsDir } = ensurePropertyDir(propertyId);
-    
-    // Read the current images data
     const data = readImagesData();
+    const newImages = [];
     
-    // Get the current highest order for this property
-    const currentMaxOrder = Math.max(
-      0,
-      ...data.property_images
-        .filter(img => img.propertyId === propertyId)
-        .map(img => img.order || 0)
-    );
-    
-    // Process each uploaded file
-    const uploadedImages = req.files.map((file, index) => {
-      const fileExtension = path.extname(file.originalname);
+    files.forEach((file, index) => {
+      const fileExtension = path.extname(file.originalname).toLowerCase();
       const imageId = `img-${uuidv4()}`;
       const filename = `${imageId}${fileExtension}`;
       
-      // Move the file to the property's directory
       const filePath = path.join(originalDir, filename);
       fs.renameSync(file.path, filePath);
       
-      // Create a thumbnail
       const thumbnailPath = path.join(thumbnailsDir, `thumb-${filename}`);
       fs.copyFileSync(filePath, thumbnailPath);
       
-      // Create the new image object
       const newImage = {
         id: imageId,
         propertyId,
-        url: `/uploads/properties/${propertyId}/original/${filename}`,
-        thumbnailUrl: `/uploads/properties/${propertyId}/thumbnails/thumb-${filename}`,
+        url: `/Uploads/properties/${propertyId}/original/${filename}`,
+        thumbnailUrl: `/Uploads/properties/${propertyId}/thumbnails/thumb-${filename}`,
         description: req.body.descriptions ? req.body.descriptions[index] || '' : '',
         timestamp: new Date().toISOString(),
-        order: currentMaxOrder + index + 1,
+        order: data.property_images.filter(img => img.propertyId === propertyId).length + 1 + index,
         type: req.body.types ? req.body.types[index] || 'exterior' : 'exterior',
         metadata: {
           filename: filename,
@@ -318,58 +302,54 @@ exports.bulkUploadImages = (req, res) => {
         }
       };
       
-      // Add the new image to the data
+      newImages.push(newImage);
       data.property_images.push(newImage);
-      
-      return newImage;
     });
     
-    // Write the updated data
     if (writeImagesData(data)) {
-      res.status(201).json({ success: true, images: uploadedImages });
+      res.status(201).json({ success: true, images: newImages });
     } else {
       res.status(500).json({ success: false, message: 'Failed to save image data' });
     }
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Failed to bulk upload images', error: error.message });
+    console.error('Error in bulkUploadImages:', error);
+    res.status(500).json({ success: false, message: 'Failed to upload images', error: error.message });
   }
 };
 
 // Import images from JSON
 exports.importImages = (req, res) => {
   try {
-    // Check if a file was uploaded
     if (!req.file) {
       return res.status(400).json({ success: false, message: 'No JSON file uploaded' });
     }
     
-    // Read the uploaded JSON file
     const jsonData = JSON.parse(fs.readFileSync(req.file.path, 'utf8'));
-    
-    // Validate the JSON structure
     if (!jsonData.property_images || !Array.isArray(jsonData.property_images)) {
-      return res.status(400).json({ success: false, message: 'Invalid JSON structure' });
+      return res.status(400).json({ success: false, message: 'Invalid JSON format' });
     }
     
-    // Read the current images data
-    const currentData = readImagesData();
+    const data = readImagesData();
+    jsonData.property_images.forEach(newImage => {
+      const existingImage = data.property_images.find(
+        img => img.id === newImage.id && img.propertyId === newImage.propertyId
+      );
+      if (!existingImage) {
+        data.property_images.push({
+          ...newImage,
+          timestamp: newImage.timestamp || new Date().toISOString()
+        });
+      }
+    });
     
-    // Merge the imported images with the current images
-    // For this example, we'll just append the new images
-    // In a real app, you might want to check for duplicates
-    const mergedImages = [...currentData.property_images, ...jsonData.property_images];
-    
-    // Write the merged data
-    const newData = { property_images: mergedImages };
-    if (writeImagesData(newData)) {
-      res.json({ success: true, message: 'Images imported successfully', count: jsonData.property_images.length });
+    if (writeImagesData(data)) {
+      fs.unlinkSync(req.file.path);
+      res.status(201).json({ success: true, message: 'Images imported successfully' });
     } else {
-      res.status(500).json({ success: false, message: 'Failed to save imported image data' });
+      res.status(500).json({ success: false, message: 'Failed to import images' });
     }
-    
-    // Delete the temporary uploaded file
-    fs.unlinkSync(req.file.path);
   } catch (error) {
+    console.error('Error in importImages:', error);
     res.status(500).json({ success: false, message: 'Failed to import images', error: error.message });
   }
 };
@@ -377,21 +357,10 @@ exports.importImages = (req, res) => {
 // Export images to JSON
 exports.exportImages = (req, res) => {
   try {
-    // Read the current images data
     const data = readImagesData();
-    
-    // Filter by property ID if specified
-    if (req.query.propertyId) {
-      data.property_images = data.property_images.filter(img => img.propertyId === req.query.propertyId);
-    }
-    
-    // Set the response headers for file download
-    res.setHeader('Content-Disposition', 'attachment; filename=property_images.json');
-    res.setHeader('Content-Type', 'application/json');
-    
-    // Send the data
-    res.json(data);
+    res.status(200).json(data);
   } catch (error) {
+    console.error('Error in exportImages:', error);
     res.status(500).json({ success: false, message: 'Failed to export images', error: error.message });
   }
 };
@@ -400,35 +369,35 @@ exports.exportImages = (req, res) => {
 exports.reorderPropertyImages = (req, res) => {
   try {
     const { propertyId } = req.params;
-    const { orderMap } = req.body;
+    const { imageOrder } = req.body;
     
-    if (!orderMap || typeof orderMap !== 'object') {
-      return res.status(400).json({ success: false, message: 'Invalid order map' });
+    if (!imageOrder || !Array.isArray(imageOrder)) {
+      return res.status(400).json({ success: false, message: 'Invalid image order' });
     }
     
-    // Read the current images data
     const data = readImagesData();
+    const propertyImages = data.property_images.filter(img => img.propertyId === propertyId);
     
-    // Update the order of each image
-    let updated = false;
-    data.property_images.forEach(img => {
-      if (img.propertyId === propertyId && orderMap[img.id] !== undefined) {
-        img.order = orderMap[img.id];
-        updated = true;
+    if (propertyImages.length !== imageOrder.length) {
+      return res.status(400).json({ success: false, message: 'Image order list does not match number of images' });
+    }
+    
+    imageOrder.forEach((imageId, index) => {
+      const image = data.property_images.find(img => img.id === imageId && img.propertyId === propertyId);
+      if (image) {
+        image.order = index + 1;
       }
     });
     
-    if (!updated) {
-      return res.status(404).json({ success: false, message: 'No images found for the given property ID' });
-    }
-    
-    // Write the updated data
     if (writeImagesData(data)) {
-      res.json({ success: true, message: 'Images reordered successfully' });
+      res.status(200).json({ success: true, message: 'Images reordered successfully' });
     } else {
-      res.status(500).json({ success: false, message: 'Failed to save reordered image data' });
+      res.status(500).json({ success: false, message: 'Failed to reorder images' });
     }
   } catch (error) {
+    console.error('Error in reorderPropertyImages:', error);
     res.status(500).json({ success: false, message: 'Failed to reorder images', error: error.message });
   }
 };
+
+module.exports = exports;

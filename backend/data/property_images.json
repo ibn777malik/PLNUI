@@ -89,6 +89,134 @@
         "size": 1987654,
         "format": "jpg"
       }
+    },
+    {
+      "id": "img-f821b908-9c13-4e38-97b2-de5a5dfaac06",
+      "propertyId": "2",
+      "url": "/uploads/properties/2/original/img-f821b908-9c13-4e38-97b2-de5a5dfaac06.jpg",
+      "thumbnailUrl": "/uploads/properties/2/thumbnails/thumb-img-f821b908-9c13-4e38-97b2-de5a5dfaac06.jpg",
+      "description": "",
+      "timestamp": "2025-05-16T12:44:37.130Z",
+      "order": 1,
+      "type": "exterior",
+      "metadata": {
+        "filename": "img-f821b908-9c13-4e38-97b2-de5a5dfaac06.jpg",
+        "originalName": "4NAD.jpg",
+        "size": 374039,
+        "mimetype": "image/jpeg"
+      }
+    },
+    {
+      "id": "img-2864c54b-858d-444e-81de-af7de2bc0044",
+      "propertyId": "3",
+      "url": "/Uploads/properties/3/original/img-2864c54b-858d-444e-81de-af7de2bc0044.jpg",
+      "thumbnailUrl": "/Uploads/properties/3/thumbnails/thumb-img-2864c54b-858d-444e-81de-af7de2bc0044.jpg",
+      "description": "",
+      "timestamp": "2025-05-16T12:53:14.725Z",
+      "order": 1,
+      "type": "exterior",
+      "metadata": {
+        "filename": "img-2864c54b-858d-444e-81de-af7de2bc0044.jpg",
+        "originalName": "4NAD.jpg",
+        "size": 374039,
+        "mimetype": "image/jpeg"
+      }
+    },
+    {
+      "id": "img-035a8250-067d-4f57-ad14-64f4fe36b689",
+      "propertyId": "4",
+      "url": "/Uploads/properties/4/original/img-035a8250-067d-4f57-ad14-64f4fe36b689.jpg",
+      "thumbnailUrl": "/Uploads/properties/4/thumbnails/thumb-img-035a8250-067d-4f57-ad14-64f4fe36b689.jpg",
+      "description": "",
+      "timestamp": "2025-05-16T12:53:25.279Z",
+      "order": 1,
+      "type": "exterior",
+      "metadata": {
+        "filename": "img-035a8250-067d-4f57-ad14-64f4fe36b689.jpg",
+        "originalName": "4NAD.jpg",
+        "size": 374039,
+        "mimetype": "image/jpeg"
+      }
+    },
+    {
+      "id": "img-c59905ca-e5f8-4f6b-8f5a-fbb28a34692e",
+      "propertyId": "5",
+      "url": "/Uploads/properties/5/original/img-c59905ca-e5f8-4f6b-8f5a-fbb28a34692e.jpg",
+      "thumbnailUrl": "/Uploads/properties/5/thumbnails/thumb-img-c59905ca-e5f8-4f6b-8f5a-fbb28a34692e.jpg",
+      "description": "",
+      "timestamp": "2025-05-16T12:53:32.463Z",
+      "order": 1,
+      "type": "exterior",
+      "metadata": {
+        "filename": "img-c59905ca-e5f8-4f6b-8f5a-fbb28a34692e.jpg",
+        "originalName": "4NAD.jpg",
+        "size": 374039,
+        "mimetype": "image/jpeg"
+      }
+    },
+    {
+      "id": "img-8e7d40ce-925f-425d-abce-1f2c6cc23f01",
+      "propertyId": "6",
+      "url": "/Uploads/properties/6/original/img-8e7d40ce-925f-425d-abce-1f2c6cc23f01.jpg",
+      "thumbnailUrl": "/Uploads/properties/6/thumbnails/thumb-img-8e7d40ce-925f-425d-abce-1f2c6cc23f01.jpg",
+      "description": "",
+      "timestamp": "2025-05-16T12:53:42.156Z",
+      "order": 1,
+      "type": "exterior",
+      "metadata": {
+        "filename": "img-8e7d40ce-925f-425d-abce-1f2c6cc23f01.jpg",
+        "originalName": "4NAD.jpg",
+        "size": 374039,
+        "mimetype": "image/jpeg"
+      }
+    },
+    {
+      "id": "img-5ff73e8b-bc73-4c07-a644-426f5719505a",
+      "propertyId": "55",
+      "url": "/Uploads/properties/55/original/img-5ff73e8b-bc73-4c07-a644-426f5719505a.jpg",
+      "thumbnailUrl": "/Uploads/properties/55/thumbnails/thumb-img-5ff73e8b-bc73-4c07-a644-426f5719505a.jpg",
+      "description": "",
+      "timestamp": "2025-05-16T14:27:32.592Z",
+      "order": 1,
+      "type": "exterior",
+      "metadata": {
+        "filename": "img-5ff73e8b-bc73-4c07-a644-426f5719505a.jpg",
+        "originalName": "DowunTown.jpg",
+        "size": 111055,
+        "mimetype": "image/jpeg"
+      }
+    },
+    {
+      "id": "img-879074dd-fbca-4caf-bc1a-bb95054f5dc1",
+      "propertyId": "345",
+      "url": "/Uploads/properties/345/original/img-879074dd-fbca-4caf-bc1a-bb95054f5dc1.jpeg",
+      "thumbnailUrl": "/Uploads/properties/345/thumbnails/thumb-img-879074dd-fbca-4caf-bc1a-bb95054f5dc1.jpeg",
+      "description": "",
+      "timestamp": "2025-05-16T14:28:22.982Z",
+      "order": 1,
+      "type": "exterior",
+      "metadata": {
+        "filename": "img-879074dd-fbca-4caf-bc1a-bb95054f5dc1.jpeg",
+        "originalName": "VillaDubai-jpg.jpeg",
+        "size": 688478,
+        "mimetype": "image/jpeg"
+      }
+    },
+    {
+      "id": "img-f5d50872-b963-4f6e-b69a-20f7ff98b140",
+      "propertyId": "321",
+      "url": "/Uploads/properties/321/original/img-f5d50872-b963-4f6e-b69a-20f7ff98b140.jpg",
+      "thumbnailUrl": "/Uploads/properties/321/thumbnails/thumb-img-f5d50872-b963-4f6e-b69a-20f7ff98b140.jpg",
+      "description": "",
+      "timestamp": "2025-05-16T14:28:35.350Z",
+      "order": 1,
+      "type": "exterior",
+      "metadata": {
+        "filename": "img-f5d50872-b963-4f6e-b69a-20f7ff98b140.jpg",
+        "originalName": "beachfront.jpg",
+        "size": 482743,
+        "mimetype": "image/jpeg"
+      }
     }
   ]
 }

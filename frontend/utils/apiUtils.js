@@ -2,6 +2,7 @@
 
 // Base API URL
 const API_BASE_URL = 'http://localhost:5000/api';
+const STATIC_BASE_URL = 'http://localhost:5000';
 
 /**
  * Upload an image file to the server for a specific property
@@ -133,7 +134,14 @@ export const getPropertyImages = async (propertyId) => {
       throw new Error(`Error fetching property images: ${response.statusText}`);
     }
     
-    return await response.json();
+    const data = await response.json();
+    // Prepend STATIC_BASE_URL to image URLs
+    data.images = data.images.map(image => ({
+      ...image,
+      url: image.url.startsWith('http') ? image.url : `${STATIC_BASE_URL}${image.url}`,
+      thumbnailUrl: image.thumbnailUrl && (image.thumbnailUrl.startsWith('http') ? image.thumbnailUrl : `${STATIC_BASE_URL}${image.thumbnailUrl}`)
+    }));
+    return data;
   } catch (error) {
     console.error('Error fetching property images:', error);
     throw error;

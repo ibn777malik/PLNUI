@@ -3,10 +3,12 @@ import Link from 'next/link';
 import { motion, AnimatePresence, useScroll, useTransform, useSpring, useInView } from 'framer-motion';
 
 // Import components
- import StatsSection from '../components/StatsSection';
- import Testimonials from '../components/Testimonials';
+import StatsSection from '../components/StatsSection';
+import Testimonials from '../components/Testimonials';
 import PropertyCard from '../components/PropertyCard';
 import ContactSidebar from '../components/ContactSidebar';
+import FeaturedPropertiesSection from '../components/FeaturedPropertiesSection';
+import PremiumOpportunitiesSection from '../components/PremiumOpportunitiesSection';
 
 const HomePage = () => {
   // State management
@@ -148,38 +150,39 @@ const HomePage = () => {
     );
   };
   
-// 3D Rotating Card Component
-const RotatingCard = ({ frontContent, backContent }) => {
-  const [isFlipped, setIsFlipped] = useState(false);
-  
-  return (
-    <motion.div 
-      className="relative w-full h-full perspective-1000 cursor-pointer"
-      whileHover={{ scale: 1.03 }}
-      onClick={() => setIsFlipped(!isFlipped)}
-    >
-      <motion.div
-        className="relative w-full h-full transition-all duration-500 preserve-3d"
-        animate={{ rotateY: isFlipped ? 180 : 0 }}
-        transition={{ duration: 0.6, ease: "easeInOut" }}
+  // 3D Rotating Card Component
+  const RotatingCard = ({ frontContent, backContent }) => {
+    const [isFlipped, setIsFlipped] = useState(false);
+    
+    return (
+      <motion.div 
+        className="relative w-full h-full perspective-1000 cursor-pointer"
+        whileHover={{ scale: 1.03 }}
+        onClick={() => setIsFlipped(!isFlipped)}
       >
-        {/* Front */}
-        <div className="absolute w-full h-full backface-hidden">
-          {frontContent}
-        </div>
-        
-        {/* Back */}
-        <div 
-          className="absolute w-full h-full backface-hidden"
-          style={{ transform: 'rotateY(180deg)' }}
+        <motion.div
+          className="relative w-full h-full transition-all duration-500 preserve-3d"
+          animate={{ rotateY: isFlipped ? 180 : 0 }}
+          transition={{ duration: 0.6, ease: "easeInOut" }}
         >
-          {backContent}
-        </div>
+          {/* Front */}
+          <div className="absolute w-full h-full backface-hidden">
+            {frontContent}
+          </div>
+          
+          {/* Back */}
+          <div 
+            className="absolute w-full h-full backface-hidden"
+            style={{ transform: 'rotateY(180deg)' }}
+          >
+            {backContent}
+          </div>
+        </motion.div>
       </motion.div>
-    </motion.div>
-  );
-};
-    // Interactive Property Slider
+    );
+  };
+
+  // Interactive Property Slider
   const PropertySlider = ({ properties }) => {
     const [currentIndex, setCurrentIndex] = useState(0);
     
@@ -459,720 +462,530 @@ const RotatingCard = ({ frontContent, backContent }) => {
           </motion.div>
         </div>
       </motion.header>
-{/* ContactSidebar */}
-    <ContactSidebar />
-      {/* Main Content Sections will go here */}
+
+      {/* ContactSidebar */}
+      <ContactSidebar />
+
+      {/* Main Content Sections */}
       {/* 1. Hero Section */}
       <section 
-  ref={heroRef}
-  className="relative h-screen flex items-center justify-center overflow-hidden bg-black"
->
-  {/* Animated background slider */}
-  <div className="absolute inset-0 z-0">
-  <AnimatePresence mode="wait">
-    {properties.length > 0 && (
-      <motion.div
-        key={activeSlide}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 0.6 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 1.5 }}
-        className="absolute inset-0"
+        ref={heroRef}
+        className="relative h-screen flex items-center justify-center overflow-hidden bg-black"
       >
-        {/* Video element for background */}
-        <video
-          autoPlay
-          loop
-          muted
-          playsInline
-          className="w-full h-full object-cover"
-          src={
-            properties[activeSlide]?.videoUrl ||
-            'https://raw.githubusercontent.com/AbdallaMalik/PlanetLand/master/PlanetLandHero.mp4' // Provided video URL
-          }
-        />
-        {/* Gradient overlay */}
-        <motion.div
-          className="absolute inset-0 bg-gradient-to-r from-black via-transparent to-black opacity-50"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 0.7 }}
-          transition={{ delay: 0.5 }}
-        />
-      </motion.div>
-    )}
-  </AnimatePresence>
-
-  {/* Overlapping animated patterns */}
-  <div className="absolute inset-0 z-0 opacity-10">
-    <motion.div
-      className="absolute top-0 left-0 w-full h-full"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 2 }}
-    >
-      <div className="w-full h-full bg-[radial-gradient(circle_at_center,rgba(220,38,38,0.3),transparent_70%)]" />
-    </motion.div>
-  </div>
-</div>
-
-  <div className="container mx-auto px-4 z-10 mt-20">
-    <motion.div 
-      className="max-w-3xl"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 1 }}
-    >
-      <div className="overflow-hidden mb-4">
-        <AnimatedText 
-          text="Discover Excellence in" 
-          className="text-4xl md:text-6xl font-bold text-white"
-        />
-      </div>
-      <div className="overflow-hidden mb-6">
-        <AnimatedText 
-          text="Dubai Real Estate" 
-          className="text-4xl md:text-6xl font-bold text-red-600"
-          delay={0.2}
-        />
-      </div>
-      
-      <motion.p 
-        className="text-xl text-white mb-8 max-w-2xl"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.8, duration: 0.8 }}
-      >
-        Exclusive high-value properties and development opportunities
-        in Dubai's most prestigious locations.
-      </motion.p>
-      
-      <motion.div
-        className="flex flex-col sm:flex-row gap-4"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 1.2, duration: 0.8 }}
-      >
-        <AnimatedButton primary className="px-8 py-4 text-lg">
-          <span className="flex items-center">
-            <span>Explore Properties</span>
-            <motion.svg
-              animate={{ x: [0, 5, 0] }}
-              transition={{ repeat: Infinity, duration: 1.5 }}
-              className="w-5 h-5 ml-2"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-            </motion.svg>
-          </span>
-        </AnimatedButton>
-        
-        <AnimatedButton primary={false} className="px-8 py-4 text-lg">
-          Contact Us
-        </AnimatedButton>
-      </motion.div>
-    </motion.div>
-  </div>
-
-  {/* Animated scroll indicator */}
-  <motion.div 
-    className="absolute bottom-10 left-0 right-0 flex justify-center"
-    initial={{ opacity: 0 }}
-    animate={{ opacity: 1 }}
-    transition={{ delay: 2 }}
-  >
-    <motion.div
-      className="w-8 h-12 border-2 border-white rounded-full flex justify-center"
-      animate={{ y: [0, 10, 0] }}
-      transition={{ repeat: Infinity, duration: 1.5 }}
-    >
-      <motion.div
-        className="w-1.5 h-1.5 bg-white rounded-full mt-2"
-        animate={{ y: [0, 5, 0] }}
-        transition={{ repeat: Infinity, duration: 1.5 }}
-      />
-    </motion.div>
-  </motion.div>
-  
-  {/* Slide indicators */}
-  <motion.div 
-    className="absolute bottom-10 left-0 right-0 flex justify-center space-x-2"
-    initial={{ opacity: 0 }}
-    animate={{ opacity: 1 }}
-    transition={{ delay: 1.5 }}
-  >
-    {properties.slice(0, 5).map((_, index) => (
-      <motion.button 
-        key={index}
-        onClick={() => setActiveSlide(index)}
-        className={`relative w-10 h-2 rounded-full overflow-hidden ${activeSlide === index ? 'bg-red-600' : 'bg-white bg-opacity-30'} transition-colors`}
-        whileHover={{ scale: 1.1 }}
-      >
-        {activeSlide === index && (
-          <motion.div 
-            className="absolute inset-0 bg-red-600"
-            initial={{ scaleX: 0, originX: 0 }}
-            animate={{ scaleX: 1 }}
-            transition={{ duration: 6, ease: "linear" }}
-          />
-        )}
-      </motion.button>
-    ))}
-  </motion.div>
-</section>
-      {/* 2. Featured Properties Section */}
-{properties.length > 0 && (
-  <section className="py-20 bg-gray-50">
-    <div className="container mx-auto px-4">
-      <motion.div 
-        className="text-center mb-16 relative"
-        initial={{ opacity: 0, y: 50 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.6 }}
-      >
-        <motion.div
-          className="inline-block relative"
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.3 }}
-        >
-          <h2 className="text-4xl md:text-5xl font-bold mb-2 relative z-10">
-            <span className="text-black">Featured </span>
-            <span className="text-red-600">Properties</span>
-          </h2>
-          <motion.div 
-            className="absolute -bottom-3 left-0 right-0 h-3 bg-gray-100 z-0"
-            initial={{ scaleX: 0 }}
-            whileInView={{ scaleX: 1 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.6, duration: 0.6 }}
-          />
-        </motion.div>
-        
-        <motion.div 
-          className="w-24 h-1 bg-red-600 mx-auto my-6"
-          initial={{ width: 0 }}
-          whileInView={{ width: 96 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.9, duration: 0.6 }}
-        />
-        
-        <motion.p 
-          className="text-gray-600 mt-4 max-w-2xl mx-auto"
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          transition={{ delay: 1.2 }}
-        >
-          Browse our selection of premium properties with our interactive slider
-        </motion.p>
-      </motion.div>
-
-      {/* Interactive Property Slider */}
-      {properties.length > 0 && (
-        <PropertySlider properties={properties.slice(0, 5)} />
-      )}
-      
-      <motion.div 
-        className="text-center mt-16"
-        initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.6, delay: 0.5 }}
-      >
-        <Link href="/properties">
-          <motion.button 
-            className="relative overflow-hidden group bg-white border-2 border-red-600 text-red-600 px-8 py-3 rounded-md font-semibold transition-all duration-300"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <span className="relative z-10 flex allerg-items-center">
-              <span>View All Properties</span>
-              <motion.svg
-                className="w-5 h-5 ml-2"
-                animate={{ x: [0, 5, 0] }}
-                transition={{ repeat: Infinity, duration: 1.5 }}
-                fill="none" 
-                stroke="currentColor" 
-                viewBox="0 0 24 24"
+        {/* Animated background slider */}
+        <div className="absolute inset-0 z-0">
+          <AnimatePresence mode="wait">
+            {properties.length > 0 && (
+              <motion.div
+                key={activeSlide}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 0.6 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 1.5 }}
+                className="absolute inset-0"
               >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
-              </motion.svg>
-            </span>
-            <motion.span 
-              className="absolute inset-0 bg-red-600 transform origin-left z-0"
-              initial={{ scaleX: 0 }}
-              whileHover={{ scaleX: 1 }}
-              transition={{ duration: 0.3 }}
-            />
-          </motion.button>
-        </Link>
-      </motion.div>
-    </div>
-  </section>
-)}
-
-<section className="py-20 bg-white">
-  <div className="container mx-auto px-4">
-    <motion.div 
-      className="text-center mb-16 relative"
-      initial={{ opacity: 0, y: 50 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.6 }}
-    >
-      <motion.div
-        className="inline-block relative"
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true }}
-        transition={{ delay: 0.3 }}
-      >
-        <h2 className="text-4xl md:text-5xl font-bold mb-2 relative z-10">
-          <span className="text-black">Premium </span>
-          <span className="text-red-600">Opportunities</span>
-        </h2>
-        <motion.div 
-          className="absolute -bottom-3 left-0 right-0 h-3 bg-gray-100 z-0"
-          initial={{ scaleX: 0 }}
-          whileInView={{ scaleX: 1 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.6, duration: 0.6 }}
-        />
-      </motion.div>
-      
-      <motion.div 
-        className="w-24 h-1 bg-red-600 mx-auto my-6"
-        initial={{ width: 0 }}
-        whileInView={{ width: 96 }}
-        viewport={{ once: true }}
-        transition={{ delay: 0.9, duration: 0.6 }}
-      />
-      
-      <motion.p 
-        className="text-gray-600 mt-4 max-w-2xl mx-auto"
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true }}
-        transition={{ delay: 1.2 }}
-      >
-        Explore our handpicked selection of exclusive properties in the most prestigious areas of Dubai
-      </motion.p>
-    </motion.div>
-
-    {isLoading ? (
-      <div className="flex justify-center items-center h-60">
-        <motion.div 
-          className="w-16 h-16 border-4 border-gray-200 border-t-red-600 rounded-full"
-          animate={{ rotate: 360 }}
-          transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
-        />
-      </div>
-    ) : (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {properties.slice(0, 3).map((property, index) => (
-          <PropertyCard key={property["OFFER NO"]} property={property} index={index} />
-        ))}
-      </div>
-    )}
-
-    <motion.div 
-      className="text-center mt-16"
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.6, delay: 0.5 }}
-    >
-      <Link href="/properties">
-        <motion.button 
-          className="relative overflow-hidden group bg-black text-white px-8 py-3 rounded-md font-semibold transition-all duration-300"
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-        >
-          <span className="relative z-10 flex items-center">
-            <span>Explore All Properties</span>
-            <motion.svg
-              className="w-5 h-5 ml-2"
-              animate={{ x: [0, 5, 0] }}
-              transition={{ repeat: Infinity, duration: 1.5 }}
-              fill="none" 
-              stroke="currentColor" 
-              viewBox="0 0 24 24"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
-            </motion.svg>
-          </span>
-          <motion.span 
-            className="absolute inset-0 bg-red-600 transform origin-left z-0"
-            initial={{ scaleX: 0 }}
-            whileHover={{ scaleX: 1 }}
-            transition={{ duration: 0.3 }}
-          />
-        </motion.button>
-      </Link>
-    </motion.div>
-  </div>
-</section>
-      {/* 3. Stats Section */}
-      <StatsSection />
-      {/* 4. Why Choose Us Section */}
-      <section className="py-20 bg-white overflow-hidden relative">
-  <motion.div 
-    className="absolute top-0 right-0 w-72 h-72 bg-red-100 rounded-full opacity-20 -z-10"
-    animate={{ 
-      x: [0, 30, 0],
-      y: [0, -50, 0],
-    }}
-    transition={{ 
-      repeat: Infinity, 
-      duration: 15,
-      ease: "easeInOut"
-    }}
-  />
-  <motion.div 
-    className="absolute bottom-20 left-10 w-64 h-64 bg-gray-200 rounded-full opacity-30 -z-10"
-    animate={{ 
-      x: [0, -20, 0],
-      y: [0, 30, 0],
-    }}
-    transition={{ 
-      repeat: Infinity, 
-      duration: 20,
-      ease: "easeInOut"
-    }}
-  />
-
-  <div className="container mx-auto px-4">
-    <motion.div 
-      className="text-center mb-16 relative"
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.6 }}
-    >
-      <motion.div
-        className="inline-block relative"
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true }}
-        transition={{ delay: 0.3 }}
-      >
-        <h2 className="text-4xl md:text-5xl font-bold mb-2 relative z-10">
-          <span className="text-black">Why Choose </span>
-          <span className="text-red-600">Planet Land</span>
-        </h2>
-        <motion.div 
-          className="absolute -bottom-3 left-0 right-0 h-3 bg-gray-100 z-0"
-          initial={{ scaleX: 0 }}
-          whileInView={{ scaleX: 1 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.6, duration: 0.6 }}
-        />
-      </motion.div>
-      
-      <motion.div 
-        className="w-24 h-1 bg-red-600 mx-auto my-6"
-        initial={{ width: 0 }}
-        whileInView={{ width: 96 }}
-        viewport={{ once: true }}
-        transition={{ delay: 0.9, duration: 0.6 }}
-      />
-    </motion.div>
-
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
-      {[
-        {
-          title: "Premium Locations",
-          description: "Access to exclusive properties in Dubai's most prestigious neighborhoods",
-          icon: "🌍",
-          stats: "175+ Prime Properties",
-          bgColor: "from-red-500 to-red-700"
-        },
-        {
-          title: "Investment Expertise",
-          description: "Professional guidance on high-value real estate investments with maximum ROI",
-          icon: "📈",
-          stats: "AED 2.5B+ Portfolio Value",
-          bgColor: "from-black to-gray-800"
-        },
-        {
-          title: "Personalized Service",
-          description: "Tailored approach to meet your specific real estate needs and preferences",
-          icon: "🤝",
-          stats: "98% Client Satisfaction",
-          bgColor: "from-red-600 to-red-800"
-        }
-      ].map((feature, index) => (
-        <div key={index} className="h-80 perspective-1000">
-          <RotatingCard 
-            frontContent={
-              <motion.div 
-                className="h-full bg-white p-8 rounded-xl shadow-xl flex flex-col items-center justify-center text-center"
-                whileHover={{ boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)" }}
-              >
-                <motion.div 
-                  className="w-20 h-20 rounded-full bg-red-600 flex items-center justify-center text-4xl mb-6"
-                  whileHover={{ 
-                    scale: 1.1,
-                    rotate: 5
-                  }}
-                >
-                  {feature.icon}
-                </motion.div>
-                <h3 className="text-2xl font-bold mb-4">{feature.title}</h3>
-                <p className="text-gray-600">{feature.description}</p>
-                <div className="mt-4 text-red-600 font-medium">Click to see more</div>
-              </motion.div>
-            }
-            backContent={
-              <motion.div 
-                className={`h-full bg-gradient-to-br ${feature.bgColor} p-8 rounded-xl shadow-xl flex flex-col items-center justify-center text-center text-white`}
-              >
-                <h3 className="text-2xl font-bold mb-6">{feature.title}</h3>
-                <div className="text-4xl font-bold mb-4">{feature.stats}</div>
-                <p className="mb-6">Our team of experts is ready to help you find the perfect property investment.</p>
-                <motion.button
-                  className="bg-white text-black px-6 py-3 rounded-lg font-semibold"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  Learn More
-                </motion.button>
-              </motion.div>
-            }
-          />
-        </div>
-      ))}
-    </div>
-  </div>
-</section>
-      {/* 5. Testimonials Section */}
-      <Testimonials />
-      {/* MAP */}
-<section className="py-20 bg-gray-50 overflow-hidden">
-  <div className="container mx-auto px-4">
-    <motion.div
-      className="text-center mb-16"
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.6 }}
-    >
-      <h2 className="text-4xl md:text-5xl font-bold mb-2">
-        <span className="text-black">Prime </span>
-        <span className="text-red-600">Locations</span>
-      </h2>
-      <motion.div 
-        className="w-24 h-1 bg-red-600 mx-auto my-6"
-        initial={{ width: 0 }}
-        whileInView={{ width: 96 }}
-        viewport={{ once: true }}
-        transition={{ delay: 0.3, duration: 0.6 }}
-      />
-      <p className="text-gray-600 mt-4 max-w-2xl mx-auto">
-        Explore Dubai's most prestigious areas where we offer exclusive property opportunities
-      </p>
-    </motion.div>
-
-    {/* Interactive 3D Map */}
-    <div className="relative h-[500px] bg-black rounded-xl overflow-hidden shadow-2xl perspective-1000">
-      <motion.div
-        className="absolute inset-0 w-full h-full"
-        style={{
-          backgroundImage: "url(https://source.unsplash.com/random/1200x800?dubai,skyline,aerial)",
-          backgroundSize: "cover",
-          backgroundPosition: "center"
-        }}
-        initial={{ scale: 1.1, opacity: 0.5 }}
-        whileInView={{ scale: 1, opacity: 0.7 }}
-        viewport={{ once: true }}
-        transition={{ duration: 1 }}
-      >
-        <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-70" />
-      </motion.div>
-
-      <div className="relative w-full h-full z-10">
-        {/* Location pins */}
-        {[
-          { id: 1, name: "Business Bay", x: "30%", y: "45%" },
-          { id: 2, name: "Downtown Dubai", x: "35%", y: "35%" },
-          { id: 3, name: "Dubai Marina", x: "15%", y: "65%" },
-          { id: 4, name: "Palm Jumeirah", x: "20%", y: "55%" },
-          { id: 5, name: "DIFC", x: "40%", y: "40%" }
-        ].map((location) => (
-          <motion.div
-            key={location.id}
-            className="absolute"
-            style={{ 
-              left: location.x,
-              top: location.y,
-            }}
-            initial={{ scale: 0, opacity: 0 }}
-            whileInView={{ scale: 1, opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: location.id * 0.15 }}
-            whileHover={{ scale: 1.2, zIndex: 20 }}
-          >
-            <motion.div 
-              className="relative"
-              animate={{ y: [0, -10, 0] }}
-              transition={{ repeat: Infinity, duration: 2, delay: location.id * 0.2 }}
-            >
-              {/* Pin */}
-              <div className="relative">
-                <motion.div
-                  className="w-4 h-4 rounded-full bg-red-600 mb-1"
-                  animate={{ 
-                    boxShadow: [
-                      "0 0 0 0 rgba(220, 38, 38, 0.7)",
-                      "0 0 0 10px rgba(220, 38, 38, 0)",
-                    ]
-                  }}
-                  transition={{ 
-                    repeat: Infinity, 
-                    duration: 1.5, 
-                    delay: location.id * 0.2 
-                  }}
+                {/* Video element for background */}
+                <video
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  className="w-full h-full object-cover"
+                  src={
+                    properties[activeSlide]?.videoUrl ||
+                    'https://raw.githubusercontent.com/AbdallaMalik/PlanetLand/master/PlanetLandHero.mp4'
+                  }
                 />
-                
-                {/* Pointer */}
-                <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-full w-2 h-2 bg-red-600 rotate-45" />
-              </div>
-              
-              {/* Label */}
-              <motion.div 
-                className="bg-white text-black text-xs py-1 px-2 rounded-lg shadow-lg whitespace-nowrap mt-2"
-                initial={{ opacity: 0, y: 5 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: location.id * 0.15 + 0.5 }}
-              >
-                {location.name}
+                {/* Gradient overlay */}
+                <motion.div
+                  className="absolute inset-0 bg-gradient-to-r from-black via-transparent to-black opacity-50"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 0.7 }}
+                  transition={{ delay: 0.5 }}
+                />
               </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Overlapping animated patterns */}
+          <div className="absolute inset-0 z-0 opacity-10">
+            <motion.div
+              className="absolute top-0 left-0 w-full h-full"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 2 }}
+            >
+              <div className="w-full h-full bg-[radial-gradient(circle_at_center,rgba(220,38,38,0.3),transparent_70%)]" />
+            </motion.div>
+          </div>
+        </div>
+
+        <div className="container mx-auto px-4 z-10 mt-20">
+          <motion.div 
+            className="max-w-3xl"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 1 }}
+          >
+            <div className="overflow-hidden mb-4">
+              <AnimatedText 
+                text="Discover Excellence in" 
+                className="text-4xl md:text-6xl font-bold text-white"
+              />
+            </div>
+            <div className="overflow-hidden mb-6">
+              <AnimatedText 
+                text="Dubai Real Estate" 
+                className="text-4xl md:text-6xl font-bold text-red-600"
+                delay={0.2}
+              />
+            </div>
+            
+            <motion.p 
+              className="text-xl text-white mb-8 max-w-2xl"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.8, duration: 0.8 }}
+            >
+              Exclusive high-value properties and development opportunities
+              in Dubai's most prestigious locations.
+            </motion.p>
+            
+            <motion.div
+              className="flex flex-col sm:flex-row gap-4"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 1.2, duration: 0.8 }}
+            >
+              <AnimatedButton primary className="px-8 py-4 text-lg">
+                <span className="flex items-center">
+                  <span>Explore Properties</span>
+                  <motion.svg
+                    animate={{ x: [0, 5, 0] }}
+                    transition={{ repeat: Infinity, duration: 1.5 }}
+                    className="w-5 h-5 ml-2"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                  </motion.svg>
+                </span>
+              </AnimatedButton>
+              
+              <AnimatedButton primary={false} className="px-8 py-4 text-lg">
+                Contact Us
+              </AnimatedButton>
             </motion.div>
           </motion.div>
-        ))}
-      </div>
-      
-      {/* Interactive elements */}
-      <div className="absolute bottom-6 right-6 z-20">
+        </div>
+
+        {/* Animated scroll indicator */}
         <motion.div 
-          className="bg-white bg-opacity-90 rounded-lg p-3 shadow-lg text-sm"
-          initial={{ opacity: 0, x: 20 }}
-          whileInView={{ opacity: 1, x: 0 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.8 }}
+          className="absolute bottom-10 left-0 right-0 flex justify-center"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 2 }}
         >
-          <p className="font-semibold mb-2">Our Premium Locations</p>
-          <ul className="space-y-1">
-            {["Business Bay", "Downtown Dubai", "Dubai Marina", "Palm Jumeirah", "DIFC"].map((location, i) => (
-              <motion.li 
-                key={location}
-                className="flex items-center"
+          <motion.div
+            className="w-8 h-12 border-2 border-white rounded-full flex justify-center"
+            animate={{ y: [0, 10, 0] }}
+            transition={{ repeat: Infinity, duration: 1.5 }}
+          >
+            <motion.div
+              className="w-1.5 h-1.5 bg-white rounded-full mt-2"
+              animate={{ y: [0, 5, 0] }}
+              transition={{ repeat: Infinity, duration: 1.5 }}
+            />
+          </motion.div>
+        </motion.div>
+        
+        {/* Slide indicators */}
+        <motion.div 
+          className="absolute bottom-10 left-0 right-0 flex justify-center space-x-2"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1.5 }}
+        >
+          {properties.slice(0, 5).map((_, index) => (
+            <motion.button 
+              key={index}
+              onClick={() => setActiveSlide(index)}
+              className={`relative w-10 h-2 rounded-full overflow-hidden ${activeSlide === index ? 'bg-red-600' : 'bg-white bg-opacity-30'} transition-colors`}
+              whileHover={{ scale: 1.1 }}
+            >
+              {activeSlide === index && (
+                <motion.div 
+                  className="absolute inset-0 bg-red-600"
+                  initial={{ scaleX: 0, originX: 0 }}
+                  animate={{ scaleX: 1 }}
+                  transition={{ duration: 6, ease: "linear" }}
+                />
+              )}
+            </motion.button>
+          ))}
+        </motion.div>
+      </section>
+
+      {/* 2. Featured Properties Section */}
+      <FeaturedPropertiesSection properties={properties} />
+
+      {/* 3. Premium Opportunities Section */}
+  <PremiumOpportunitiesSection properties={properties} />
+
+      {/* 4. Stats Section */}
+      <StatsSection />
+
+      {/* 5. Why Choose Us Section */}
+      <section className="py-20 bg-white overflow-hidden relative">
+        <motion.div 
+          className="absolute top-0 right-0 w-72 h-72 bg-red-100 rounded-full opacity-20 -z-10"
+          animate={{ 
+            x: [0, 30, 0],
+            y: [0, -50, 0],
+          }}
+          transition={{ 
+            repeat: Infinity, 
+            duration: 15,
+            ease: "easeInOut"
+          }}
+        />
+        <motion.div 
+          className="absolute bottom-20 left-10 w-64 h-64 bg-gray-200 rounded-full opacity-30 -z-10"
+          animate={{ 
+            x: [0, -20, 0],
+            y: [0, 30, 0],
+          }}
+          transition={{ 
+            repeat: Infinity, 
+            duration: 20,
+            ease: "easeInOut"
+          }}
+        />
+
+        <div className="container mx-auto px-4">
+          <motion.div 
+            className="text-center mb-16 relative"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+          >
+            <motion.div
+              className="inline-block relative"
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.3 }}
+            >
+              <h2 className="text-4xl md:text-5xl font-bold mb-2 relative z-10">
+                <span className="text-black">Why Choose </span>
+                <span className="text-red-600">Planet Land</span>
+              </h2>
+              <motion.div 
+                className="absolute -bottom-3 left-0 right-0 h-3 bg-gray-100 z-0"
+                initial={{ scaleX: 0 }}
+                whileInView={{ scaleX: 1 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.6, duration: 0.6 }}
+              />
+            </motion.div>
+            
+            <motion.div 
+              className="w-24 h-1 bg-red-600 mx-auto my-6"
+              initial={{ width: 0 }}
+              whileInView={{ width: 96 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.9, duration: 0.6 }}
+            />
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
+            {[
+              {
+                title: "Premium Locations",
+                description: "Access to exclusive properties in Dubai's most prestigious neighborhoods",
+                icon: "🌍",
+                stats: "175+ Prime Properties",
+                bgColor: "from-red-500 to-red-700"
+              },
+              {
+                title: "Investment Expertise",
+                description: "Professional guidance on high-value real estate investments with maximum ROI",
+                icon: "📈",
+                stats: "AED 2.5B+ Portfolio Value",
+                bgColor: "from-black to-gray-800"
+              },
+              {
+                title: "Personalized Service",
+                description: "Tailored approach to meet your specific real estate needs and preferences",
+                icon: "🤝",
+                stats: "98% Client Satisfaction",
+                bgColor: "from-red-600 to-red-800"
+              }
+            ].map((feature, index) => (
+              <div key={index} className="h-80 perspective-1000">
+                <RotatingCard 
+                  frontContent={
+                    <motion.div 
+                      className="h-full bg-white p-8 rounded-xl shadow-xl flex flex-col items-center justify-center text-center"
+                      whileHover={{ boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)" }}
+                    >
+                      <motion.div 
+                        className="w-20 h-20 rounded-full bg-red-600 flex items-center justify-center text-4xl mb-6"
+                        whileHover={{ 
+                          scale: 1.1,
+                          rotate: 5
+                        }}
+                      >
+                        {feature.icon}
+                      </motion.div>
+                      <h3 className="text-2xl font-bold mb-4">{feature.title}</h3>
+                      <p className="text-gray-600">{feature.description}</p>
+                      <div className="mt-4 text-red-600 font-medium">Click to see more</div>
+                    </motion.div>
+                  }
+                  backContent={
+                    <motion.div 
+                      className={`h-full bg-gradient-to-br ${feature.bgColor} p-8 rounded-xl shadow-xl flex flex-col items-center justify-center text-center text-white`}
+                    >
+                      <h3 className="text-2xl font-bold mb-6">{feature.title}</h3>
+                      <div className="text-4xl font-bold mb-4">{feature.stats}</div>
+                      <p className="mb-6">Our team of experts is ready to help you find the perfect property investment.</p>
+                      <motion.button
+                        className="bg-white text-black px-6 py-3 rounded-lg font-semibold"
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                      >
+                        Learn More
+                      </motion.button>
+                    </motion.div>
+                  }
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* 6. Testimonials Section */}
+      <Testimonials />
+
+      {/* 7. Map Section */}
+      <section className="py-20 bg-gray-50 overflow-hidden">
+        <div className="container mx-auto px-4">
+          <motion.div
+            className="text-center mb-16"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+          >
+            <h2 className="text-4xl md:text-5xl font-bold mb-2">
+              <span className="text-black">Prime </span>
+              <span className="text-red-600">Locations</span>
+            </h2>
+            <motion.div 
+              className="w-24 h-1 bg-red-600 mx-auto my-6"
+              initial={{ width: 0 }}
+              whileInView={{ width: 96 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.3, duration: 0.6 }}
+            />
+            <p className="text-gray-600 mt-4 max-w-2xl mx-auto">
+              Explore Dubai's most prestigious areas where we offer exclusive property opportunities
+            </p>
+          </motion.div>
+
+          <div className="relative h-[500px] bg-black rounded-xl overflow-hidden shadow-2xl perspective-1000">
+            <motion.div
+              className="absolute inset-0 w-full h-full"
+              style={{
+                backgroundImage: "url(https://source.unsplash.com/random/1200x800?dubai,skyline,aerial)",
+                backgroundSize: "cover",
+                backgroundPosition: "center"
+              }}
+              initial={{ scale: 1.1, opacity: 0.5 }}
+              whileInView={{ scale: 1, opacity: 0.7 }}
+              viewport={{ once: true }}
+              transition={{ duration: 1 }}
+            >
+              <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-70" />
+            </motion.div>
+
+            <div className="relative w-full h-full z-10">
+              {[
+                { id: 1, name: "Business Bay", x: "30%", y: "45%" },
+                { id: 2, name: "Downtown Dubai", x: "35%", y: "35%" },
+                { id: 3, name: "Dubai Marina", x: "15%", y: "65%" },
+                { id: 4, name: "Palm Jumeirah", x: "20%", y: "55%" },
+                { id: 5, name: "DIFC", x: "40%", y: "40%" }
+              ].map((location) => (
+                <motion.div
+                  key={location.id}
+                  className="absolute"
+                  style={{ 
+                    left: location.x,
+                    top: location.y,
+                  }}
+                  initial={{ scale: 0, opacity: 0 }}
+                  whileInView={{ scale: 1, opacity: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: location.id * 0.15 }}
+                  whileHover={{ scale: 1.2, zIndex: 20 }}
+                >
+                  <motion.div 
+                    className="relative"
+                    animate={{ y: [0, -10, 0] }}
+                    transition={{ repeat: Infinity, duration: 2, delay: location.id * 0.2 }}
+                  >
+                    <div className="relative">
+                      <motion.div
+                        className="w-4 h-4 rounded-full bg-red-600 mb-1"
+                        animate={{ 
+                          boxShadow: [
+                            "0 0 0 0 rgba(220, 38, 38, 0.7)",
+                            "0 0 0 10px rgba(220, 38, 38, 0)",
+                          ]
+                        }}
+                        transition={{ 
+                          repeat: Infinity, 
+                          duration: 1.5, 
+                          delay: location.id * 0.2 
+                        }}
+                      />
+                      <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-full w-2 h-2 bg-red-600 rotate-45" />
+                    </div>
+                    <motion.div 
+                      className="bg-white text-black text-xs py-1 px-2 rounded-lg shadow-lg whitespace-nowrap mt-2"
+                      initial={{ opacity: 0, y: 5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: location.id * 0.15 + 0.5 }}
+                    >
+                      {location.name}
+                    </motion.div>
+                  </motion.div>
+                </motion.div>
+              ))}
+            </div>
+            
+            <div className="absolute bottom-6 right-6 z-20">
+              <motion.div 
+                className="bg-white bg-opacity-90 rounded-lg p-3 shadow-lg text-sm"
                 initial={{ opacity: 0, x: 20 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: 0.8 + i * 0.1 }}
+                transition={{ delay: 0.8 }}
               >
-                <span className="w-2 h-2 bg-red-600 rounded-full mr-2" />
-                {location}
-              </motion.li>
-            ))}
-          </ul>
-        </motion.div>
-      </div>
-    </div>
-  </div>
-</section>
-{/* 6. Call-to-Action Section */}
-<section className="py-20 bg-black text-white relative overflow-hidden">
-  <div 
-    className="absolute inset-0 z-0 opacity-20" 
-    style={{
-      backgroundImage: 'url(https://source.unsplash.com/random/1920x1080?dubai,skyline,night)',
-      backgroundSize: 'cover',
-      backgroundPosition: 'center'
-    }}
-  />
-  
-  {/* Animated red lines */}
-  <motion.div
-    className="absolute top-0 left-0 w-full h-1 bg-red-600"
-    initial={{ scaleX: 0, transformOrigin: "left" }}
-    whileInView={{ scaleX: 1 }}
-    viewport={{ once: true }}
-    transition={{ duration: 1.5 }}
-  />
-  <motion.div
-    className="absolute bottom-0 right-0 w-full h-1 bg-red-600"
-    initial={{ scaleX: 0, transformOrigin: "right" }}
-    whileInView={{ scaleX: 1 }}
-    viewport={{ once: true }}
-    transition={{ duration: 1.5 }}
-  />
-  
-  <div className="container mx-auto px-4 relative z-10">
-    <div className="max-w-3xl mx-auto">
-      <motion.div 
-        className="text-center perspective-1000"
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.8 }}
-      >
-        <motion.div
-          initial={{ rotateX: -30, opacity: 0 }}
-          whileInView={{ rotateX: 0, opacity: 1 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.8 }}
-        >
-          <h2 className="text-4xl md:text-5xl font-bold mb-6">
-            Ready to Find Your <span className="text-red-600">Perfect Property</span>?
-          </h2>
-        </motion.div>
-        
-        <motion.p 
-          className="text-xl mb-10"
-          initial={{ y: 30, opacity: 0 }}
-          whileInView={{ y: 0, opacity: 1 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.3, duration: 0.8 }}
-        >
-          Let us help you discover the most exclusive real estate opportunities in Dubai
-        </motion.p>
+                <p className="font-semibold mb-2">Our Premium Locations</p>
+                <ul className="space-y-1">
+                  {["Business Bay", "Downtown Dubai", "Dubai Marina", "Palm Jumeirah", "DIFC"].map((location, i) => (
+                    <motion.li 
+                      key={location}
+                      className="flex items-center"
+                      initial={{ opacity: 0, x: 20 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: 0.8 + i * 0.1 }}
+                    >
+                      <span className="w-2 h-2 bg-red-600 rounded-full mr-2" />
+                      {location}
+                    </motion.li>
+                  ))}
+                </ul>
+              </motion.div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 8. Call-to-Action Section */}
+      <section className="py-20 bg-black text-white relative overflow-hidden">
+        <div 
+          className="absolute inset-0 z-0 opacity-20" 
+          style={{
+            backgroundImage: 'url(https://source.unsplash.com/random/1920x1080?dubai,skyline,night)',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center'
+          }}
+        />
         
         <motion.div
-          className="flex flex-col sm:flex-row gap-5 justify-center"
-          initial={{ y: 30, opacity: 0 }}
-          whileInView={{ y: 0, opacity: 1 }}
+          className="absolute top-0 left-0 w-full h-1 bg-red-600"
+          initial={{ scaleX: 0, transformOrigin: "left" }}
+          whileInView={{ scaleX: 1 }}
           viewport={{ once: true }}
-          transition={{ delay: 0.6, duration: 0.8 }}
-        >
-          <AnimatedButton primary className="px-8 py-4 text-lg">
-            <span className="flex items-center">
-              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-              Find Your Property
-            </span>
-          </AnimatedButton>
-          
-          <AnimatedButton primary={false} className="px-8 py-4 text-lg">
-            <span className="flex items-center">
-              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-              </svg>
-              Contact Us
-            </span>
-          </AnimatedButton>
-        </motion.div>
-      </motion.div>
-    </div>
-  </div>
-</section>
+          transition={{ duration: 1.5 }}
+        />
+        <motion.div
+          className="absolute bottom-0 right-0 w-full h-1 bg-red-600"
+          initial={{ scaleX: 0, transformOrigin: "right" }}
+          whileInView={{ scaleX: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 1.5 }}
+        />
+        
+        <div className="container mx-auto px-4 relative z-10">
+          <div className="max-w-3xl mx-auto">
+            <motion.div 
+              className="text-center perspective-1000"
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.8 }}
+            >
+              <motion.div
+                initial={{ rotateX: -30, opacity: 0 }}
+                whileInView={{ rotateX: 0, opacity: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.8 }}
+              >
+                <h2 className="text-4xl md:text-5xl font-bold mb-6">
+                  Ready to Find Your <span className="text-red-600">Perfect Property</span>?
+                </h2>
+              </motion.div>
+              
+              <motion.p 
+                className="text-xl mb-10"
+                initial={{ y: 30, opacity: 0 }}
+                whileInView={{ y: 0, opacity: 1 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.3, duration: 0.8 }}
+              >
+                Let us help you discover the most exclusive real estate opportunities in Dubai
+              </motion.p>
+              
+              <motion.div
+                className="flex flex-col sm:flex-row gap-5 justify-center"
+                initial={{ y: 30, opacity: 0 }}
+                whileInView={{ y: 0, opacity: 1 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.6, duration: 0.8 }}
+              >
+                <AnimatedButton primary className="px-8 py-4 text-lg">
+                  <span className="flex items-center">
+                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    Find Your Property
+                  </span>
+                </AnimatedButton>
+                
+                <AnimatedButton primary={false} className="px-8 py-4 text-lg">
+                  <span className="flex items-center">
+                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                    Contact Us
+                  </span>
+                </AnimatedButton>
+              </motion.div>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
       {/* Footer */}
       <footer className="bg-black text-white pt-16 pb-8">
         <div className="container mx-auto px-4">
