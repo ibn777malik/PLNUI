@@ -399,7 +399,7 @@ const RotatingCard = ({ frontContent, backContent }) => {
               initial="hidden"
               animate="visible"
             >
-              {['Home', 'Properties', 'About', 'Contact'].map((item, i) => (
+              {['Home', 'Properties', 'About', 'Get in Touch'].map((item, i) => (
                 <motion.li 
                   key={item}
                   variants={navItemVariants}
