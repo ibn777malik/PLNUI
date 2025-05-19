@@ -217,6 +217,70 @@
         "size": 482743,
         "mimetype": "image/jpeg"
       }
+    },
+    {
+      "id": "img-1ceb392a-17eb-4958-be61-25821655551f",
+      "propertyId": "2",
+      "url": "/Uploads/properties/2/original/img-1ceb392a-17eb-4958-be61-25821655551f.jpg",
+      "thumbnailUrl": "/Uploads/properties/2/thumbnails/thumb-img-1ceb392a-17eb-4958-be61-25821655551f.jpg",
+      "description": "",
+      "timestamp": "2025-05-19T13:03:30.152Z",
+      "order": 2,
+      "type": "exterior",
+      "metadata": {
+        "filename": "img-1ceb392a-17eb-4958-be61-25821655551f.jpg",
+        "originalName": "Bille.jpg",
+        "size": 46325,
+        "mimetype": "image/jpeg"
+      }
+    },
+    {
+      "id": "img-7c1a45f3-b0a9-4706-9dc2-e6836e35476c",
+      "propertyId": "2",
+      "url": "/Uploads/properties/2/original/img-7c1a45f3-b0a9-4706-9dc2-e6836e35476c.jpg",
+      "thumbnailUrl": "/Uploads/properties/2/thumbnails/thumb-img-7c1a45f3-b0a9-4706-9dc2-e6836e35476c.jpg",
+      "description": "",
+      "timestamp": "2025-05-19T13:03:30.153Z",
+      "order": 4,
+      "type": "exterior",
+      "metadata": {
+        "filename": "img-7c1a45f3-b0a9-4706-9dc2-e6836e35476c.jpg",
+        "originalName": "John.jpg",
+        "size": 130645,
+        "mimetype": "image/jpeg"
+      }
+    },
+    {
+      "id": "img-df3b7a04-ff61-4126-bb53-68536dc3865c",
+      "propertyId": "2",
+      "url": "/Uploads/properties/2/original/img-df3b7a04-ff61-4126-bb53-68536dc3865c.jpg",
+      "thumbnailUrl": "/Uploads/properties/2/thumbnails/thumb-img-df3b7a04-ff61-4126-bb53-68536dc3865c.jpg",
+      "description": "",
+      "timestamp": "2025-05-19T13:03:30.154Z",
+      "order": 6,
+      "type": "exterior",
+      "metadata": {
+        "filename": "img-df3b7a04-ff61-4126-bb53-68536dc3865c.jpg",
+        "originalName": "Leo.jpg",
+        "size": 35900,
+        "mimetype": "image/jpeg"
+      }
+    },
+    {
+      "id": "img-3961f7b0-91b4-4260-bd80-4188204cbd8f",
+      "propertyId": "2",
+      "url": "/Uploads/properties/2/original/img-3961f7b0-91b4-4260-bd80-4188204cbd8f.jpg",
+      "thumbnailUrl": "/Uploads/properties/2/thumbnails/thumb-img-3961f7b0-91b4-4260-bd80-4188204cbd8f.jpg",
+      "description": "",
+      "timestamp": "2025-05-19T13:03:30.172Z",
+      "order": 8,
+      "type": "exterior",
+      "metadata": {
+        "filename": "img-3961f7b0-91b4-4260-bd80-4188204cbd8f.jpg",
+        "originalName": "Sarah.jpg",
+        "size": 881509,
+        "mimetype": "image/jpeg"
+      }
     }
   ]
 }

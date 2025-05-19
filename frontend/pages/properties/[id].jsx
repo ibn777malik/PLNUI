@@ -29,9 +29,6 @@ import {
   FaCheckCircle,
   FaSpinner
 } from 'react-icons/fa';
-import apiUtils from '../../utils/apiUtils';
-
-const { getPropertyImages } = apiUtils;
 
 // Slider arrow components
 const PrevArrow = (props) => {
@@ -288,10 +285,14 @@ const InquiryForm = () => {
   );
 };
 
-// Similar Properties Component
+// Similar Properties Component - FIXED VERSION
 const SimilarProperties = ({ properties }) => {
   const containerRef = useRef();
   const isInView = useInView(containerRef, { once: true });
+
+  // Safety check
+  const validProperties = Array.isArray(properties) ? 
+    properties.filter(p => p && typeof p === 'object' && p["OFFER NO"]) : [];
 
   const settings = {
     dots: false,
@@ -307,7 +308,8 @@ const SimilarProperties = ({ properties }) => {
     ],
   };
 
-  if (!properties || properties.length === 0) return null;
+  // Don't render anything if no valid properties
+  if (validProperties.length === 0) return null;
 
   return (
     <motion.div
@@ -320,7 +322,7 @@ const SimilarProperties = ({ properties }) => {
       <h2 className="text-3xl font-bold mb-8">Similar Properties</h2>
       
       <Slider {...settings}>
-        {properties.map((property) => (
+        {validProperties.map((property) => (
           <div key={property["OFFER NO"]} className="px-4">
             <Link href={`/properties/${property["OFFER NO"]}`} className="block">
               <motion.div
@@ -333,6 +335,9 @@ const SimilarProperties = ({ properties }) => {
                     src={property.imageUrl || `https://source.unsplash.com/random/640x480?dubai,real,estate,${property["OFFER NO"]}`}
                     alt={property["Property Location"]}
                     className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.target.src = `https://source.unsplash.com/random/640x480?dubai,real,estate,${property["OFFER NO"]}`;
+                    }}
                   />
                   <div className="absolute top-2 right-2 bg-red-600 text-white text-xs px-2 py-1 rounded">
                     {property["Status"] || "FOR SALE"}
@@ -358,6 +363,15 @@ const SimilarProperties = ({ properties }) => {
   );
 };
 
+// Helper function to create placeholder images
+function createPlaceholders(propertyData, count) {
+  return Array(count).fill(null).map((_, i) => ({
+    id: `placeholder-${i}`,
+    url: `https://source.unsplash.com/random/800x600?dubai,property,${i+1}`,
+    description: `${propertyData?.["Property Location"] || "Property"} View ${i+1}`
+  }));
+}
+
 export default function PropertyDetail() {
   const router = useRouter();
   const { id } = router.query;
@@ -374,13 +388,17 @@ export default function PropertyDetail() {
   const heroRef = useRef(null);
   const isHeroInView = useInView(heroRef, { once: true });
   
-  // Fetch property data
+  // State for main property image url (similar to how it works in similar properties)
+  const [mainImageUrl, setMainImageUrl] = useState('');
+  
+  // Fetch property data - SIMPLIFIED VERSION
   useEffect(() => {
     if (!id) return;
 
     const fetchPropertyData = async () => {
       try {
         setIsLoading(true);
+        
         // Fetch property details
         const response = await fetch(`http://localhost:5000/api/properties/${id}`);
         if (!response.ok) {
@@ -389,73 +407,111 @@ export default function PropertyDetail() {
         const propertyData = await response.json();
         setProperty(propertyData);
         
-        // Fetch property images
+        // Fetch property images - SIMPLIFIED approach using exactly the same method as similar properties
         try {
-          const imagesResponse = await fetch(`http://localhost:5000/api/images/property/${id}`);
-          if (imagesResponse.ok) {
-            const imagesData = await imagesResponse.json();
-            console.log('Images API response:', imagesData); // Debug log
-            // Process image URLs to ensure they have the full path
-          if (imagesResponse.ok && imagesData.images && imagesData.images.length > 0) {
-  const processedImages = imagesData.images.map(img => ({
-    ...img,
-    url: img.url.startsWith('http') ? img.url : `http://localhost:5000${img.url}`,
-    thumbnailUrl: img.thumbnailUrl ? (img.thumbnailUrl.startsWith('http') ? img.thumbnailUrl : `http://localhost:5000${img.thumbnailUrl}`) : null
-  }));
-  setImages(processedImages);
+          const imgResponse = await fetch(`http://localhost:5000/api/images/property/${id}`);
+          if (imgResponse.ok) {
+            const imgData = await imgResponse.json();
+            console.log('Raw images data:', imgData);
+            
+            if (imgData.images && imgData.images.length > 0) {
+              // Process MAIN IMAGE exactly like similar properties - just take the first image
+              // This is the key difference - using same technique as similar properties (which works)
+              const firstImage = imgData.images[0];
+              if (firstImage && firstImage.url) {
+                // Fix URL path by ensuring lowercase /uploads/
+                const fixedUrl = typeof firstImage.url === 'string' ? 
+                  firstImage.url.replace(/^\/Uploads\//i, '/uploads/') : '';
+                
+                const mainImgUrl = fixedUrl.startsWith('http') 
+                  ? fixedUrl 
+                  : `http://localhost:5000${fixedUrl}`;
+                
+                console.log('Setting main image URL to:', mainImgUrl);
+                setMainImageUrl(mainImgUrl);
+              }
+              
+              // Also process all images for the gallery (for later use)
+              const processedImages = imgData.images.map(img => {
+                // Fix URL path by ensuring lowercase /uploads/
+                const fixedUrl = typeof img.url === 'string' ? 
+                  img.url.replace(/^\/Uploads\//i, '/uploads/') : '';
+                
+                const imgUrl = fixedUrl.startsWith('http') 
+                  ? fixedUrl 
+                  : `http://localhost:5000${fixedUrl}`;
+                
+                return {
+                  id: img.id,
+                  url: imgUrl,
+                  description: img.description || ''
+                };
+              });
+              
+              setImages(processedImages);
+              console.log('Processed images for gallery:', processedImages);
+            } else {
+              // Set placeholder images if no images found
+              setImages(createPlaceholders(propertyData, 4));
             }
-        } else {
-  const placeholders = Array(4).fill(null).map((_, i) => ({
-    id: `placeholder-${i}`,
-    url: `https://source.unsplash.com/random/800x600?dubai,property,${i+1}`,
-    description: `${propertyData["Property Location"] || "Property"} View ${i+1}`
-  }));
-  setImages(placeholders);
+          } else {
+            console.log('Image fetch response not OK:', imgResponse.status);
+            setImages(createPlaceholders(propertyData, 4));
           }
         } catch (imgError) {
           console.error('Error fetching property images:', imgError);
-          // Fallback to placeholders
-          const placeholders = Array(4).fill(null).map((_, i) => ({
-            id: `placeholder-${i}`,
-            url: `https://source.unsplash.com/random/800x600?dubai,property,${i+1}`,
-            description: `${propertyData["Property Location"] || "Property"} View ${i+1}`
-          }));
-          setImages(placeholders);
+          setImages(createPlaceholders(propertyData, 4));
         }
         
         // Fetch similar properties (same district or type)
-        const allPropertiesResponse = await fetch('http://localhost:5000/api/properties');
-        const allProperties = await allPropertiesResponse.json();
-        
-        const similar = allProperties
-          .filter(p => p["OFFER NO"] !== id && (
-            p["District"] === propertyData["District"] ||
-            p["Type"] === propertyData["Type"]
-          ))
-          .slice(0, 6);
-        
-        // Fetch thumbnails for similar properties
-        const similarWithImages = await Promise.all(
-          similar.map(async (prop) => {
-            try {
-              const imgResponse = await fetch(`http://localhost:5000/api/images/property/${prop["OFFER NO"]}`);
-              if (imgResponse.ok) {
-                const imgData = await imgResponse.json();
-                if (imgData.images && imgData.images.length > 0) {
-                  const imgUrl = imgData.images[0].url.startsWith('http') 
-                    ? imgData.images[0].url 
-                    : `http://localhost:5000${imgData.images[0].url}`;
-                  return { ...prop, imageUrl: imgUrl };
+        try {
+          const allPropertiesResponse = await fetch('http://localhost:5000/api/properties');
+          const allProperties = await allPropertiesResponse.json();
+          
+          // Filter out the current property and get similar ones
+          const similar = allProperties
+            .filter(p => p && p["OFFER NO"] && p["OFFER NO"] !== id && (
+              p["District"] === propertyData["District"] ||
+              p["Type"] === propertyData["Type"]
+            ))
+            .slice(0, 6);
+          
+          // Fetch thumbnails for similar properties - SIMPLIFIED
+          const similarWithImages = await Promise.all(
+            similar.map(async (prop) => {
+              try {
+                // Same approach as property grid
+                const imgResponse = await fetch(`http://localhost:5000/api/images/property/${prop["OFFER NO"]}`);
+                if (imgResponse.ok) {
+                  const imgData = await imgResponse.json();
+                  if (imgData.images && imgData.images.length > 0) {
+                    // Fix URL path by ensuring lowercase /uploads/
+                    const fixedUrl = typeof imgData.images[0].url === 'string' ? 
+                      imgData.images[0].url.replace(/^\/Uploads\//i, '/uploads/') : '';
+                    
+                    const imgUrl = fixedUrl.startsWith('http') 
+                      ? fixedUrl 
+                      : `http://localhost:5000${fixedUrl}`;
+                    
+                    return { ...prop, imageUrl: imgUrl };
+                  }
                 }
+                return { ...prop, imageUrl: `https://source.unsplash.com/random/400x300?dubai,property,${prop["OFFER NO"]}` };
+              } catch (err) {
+                console.error(`Error fetching image for property ${prop["OFFER NO"]}:`, err);
+                return { ...prop, imageUrl: `https://source.unsplash.com/random/400x300?dubai,property,${prop["OFFER NO"]}` };
               }
-              return { ...prop, imageUrl: `https://source.unsplash.com/random/400x300?dubai,property,${prop["OFFER NO"]}` };
-            } catch {
-              return { ...prop, imageUrl: `https://source.unsplash.com/random/400x300?dubai,property,${prop["OFFER NO"]}` };
-            }
-          })
-        );
-        
-        setSimilarProperties(similarWithImages);
+            })
+          );
+          
+          // Make sure to filter out any invalid properties
+          const validSimilarProperties = similarWithImages.filter(p => p && p["OFFER NO"]);
+          setSimilarProperties(validSimilarProperties);
+          
+        } catch (similarError) {
+          console.error('Error fetching similar properties:', similarError);
+          setSimilarProperties([]);
+        }
         
       } catch (error) {
         console.error('Error fetching property data:', error);
@@ -467,6 +523,12 @@ export default function PropertyDetail() {
 
     fetchPropertyData();
   }, [id]);
+
+  // Open gallery with specific image
+  const openGallery = (index = 0) => {
+    setInitialSlide(index);
+    setGalleryOpen(true);
+  };
 
   // Loading state
   if (isLoading) {
@@ -512,12 +574,6 @@ export default function PropertyDetail() {
     ? `${property["GFA Sq. Ft."].toLocaleString()} sqft (${property["GFA Sq M."]?.toLocaleString() || "-"} sqm)`
     : 'N/A';
 
-  // Open gallery with specific image
-  const openGallery = (index = 0) => {
-    setInitialSlide(index);
-    setGalleryOpen(true);
-  };
-
   return (
     <div className="bg-white min-h-screen">
       <Head>
@@ -544,21 +600,21 @@ export default function PropertyDetail() {
         {/* Hero section with property images */}
         <div ref={heroRef} className="container mx-auto px-4 mb-12">
           <div className="flex flex-col md:flex-row gap-8">
-            {/* Main Image */}
+            {/* Main Image - SIMPLIFIED APPROACH LIKE SIMILAR PROPERTIES */}
             <motion.div 
               className="md:w-2/3 relative rounded-xl overflow-hidden shadow-lg h-[400px] md:h-[500px]"
               initial={{ opacity: 0, y: 30 }}
               animate={isHeroInView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.6 }}
             >
-              {images.length > 0 ? (
+              {mainImageUrl ? (
                 <img
-                  src={images[0].url}
-                  alt={images[0].description || property["Property Location"]}
+                  src={mainImageUrl}
+                  alt={property["Property Location"]}
                   className="w-full h-full object-cover"
                   onClick={() => openGallery(0)}
                   onError={(e) => {
-                    console.log("Image load error:", images[0].url);
+                    console.error("Main image load error for URL:", mainImageUrl);
                     e.target.src = `https://source.unsplash.com/random/800x600?dubai,property,${property["OFFER NO"]}`;
                   }}
                 />
@@ -606,6 +662,7 @@ export default function PropertyDetail() {
                     alt={image.description || `Property image ${index + 2}`}
                     className="w-full h-full object-cover"
                     onError={(e) => {
+                      console.error(`Thumbnail error for ${image.url}`);
                       e.target.src = `https://source.unsplash.com/random/400x300?dubai,property,${index}`;
                     }}
                   />
