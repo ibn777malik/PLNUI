@@ -71,7 +71,7 @@ const PremiumOpportunitiesSection = ({ properties = [] }) => {
                 className="w-full h-full object-cover"
                 src={
                   offers[activeSlide]?.videoUrl ||
-                  'https://raw.githubusercontent.com/AbdallaMalik/PlanetLand/master/Featured.mp4'
+                  'https://raw.githubusercontent.com/AbdallaMalik/PlanetLand/master/S2white.mp4'
                 }
               />
             </motion.div>

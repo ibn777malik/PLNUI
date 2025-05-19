@@ -139,7 +139,7 @@ const FeaturedPropertiesSection = ({ properties = [] }) => {
                 className="w-full h-full object-cover"
                 src={
                   enhancedProperties[activeSlide]?.videoUrl ||
-                  'https://raw.githubusercontent.com/AbdallaMalik/PlanetLand/master/premium.mp4'
+                  'https://raw.githubusercontent.com/AbdallaMalik/PlanetLand/master/Swhite.mp4'
                 }
               />
             </motion.div>
